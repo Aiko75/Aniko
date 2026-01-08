@@ -1,30 +1,110 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { useEffect, useState } from "react";
-import ModeToggle from "@/components/ui/ModeToggle";
+import { useEffect, useState, useRef } from "react";
 import Cookies from "js-cookie";
+import { useMode } from "@/context/ModeContext";
+
+const KONAMI_CODE = [
+  "ArrowUp",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowLeft",
+  "ArrowRight",
+  "b",
+  "a",
+  "Enter",
+];
 
 export default function Homepage() {
   const router = useRouter();
+  const { mode, setMode } = useMode();
   const [hoveredCard, setHoveredCard] = useState(null);
-  const [currentMode, setCurrentMode] = useState("anime");
 
+  // State cho Konami Code
+  const [konamiIndex, setKonamiIndex] = useState(0);
+
+  // State cho Triple Tap (Mobile)
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef(null);
+
+  // --- HÀM XỬ LÝ CHUYỂN ĐỔI CHẾ ĐỘ (CORE LOGIC) ---
+  const switchToHanime = () => {
+    Cookies.set("app_mode", "hanime", { expires: 365 }); // Lưu Cookie 1 năm
+    setMode("hanime"); // Cập nhật State Context
+    router.refresh(); // Refresh để Server Component cập nhật theo Cookie mới
+    alert("🔓 SECRET UNLOCKED: Welcome to the dark side!");
+  };
+
+  const switchToAnime = () => {
+    Cookies.set("app_mode", "anime", { expires: 365 }); // Lưu Cookie 1 năm
+    setMode("anime"); // Cập nhật State Context
+    router.refresh();
+    alert("🛡️ PANIC MODE: Đã quay về giao diện an toàn!");
+  };
+
+  // --- 1. LOGIC KONAMI CODE & ESCAPE KEY (DESKTOP) ---
   useEffect(() => {
-    // Đọc mode từ cookie, mặc định là anime
-    const mode = Cookies.get("app_mode") || "anime";
-    setCurrentMode(mode);
-  }, []);
+    const handleKeyDown = (e) => {
+      // Thoát chế độ Hanime bằng phím Esc
+      if (e.key === "Escape" && mode === "hanime") {
+        switchToAnime();
+        return;
+      }
 
-  // --- HỆ THỐNG MÀU ĐỘNG ---
-  const isHanime = currentMode === "hanime";
+      // Kích hoạt chế độ Hanime bằng Konami Code
+      if (mode === "anime") {
+        const requiredKey = KONAMI_CODE[konamiIndex];
+        if (e.key.toLowerCase() === requiredKey.toLowerCase()) {
+          const nextIndex = konamiIndex + 1;
+          if (nextIndex === KONAMI_CODE.length) {
+            switchToHanime();
+            setKonamiIndex(0);
+          } else {
+            setKonamiIndex(nextIndex);
+          }
+        } else {
+          // Reset nếu gõ sai (Trừ khi gõ lại từ đầu bằng ArrowUp)
+          setKonamiIndex(e.key === "ArrowUp" ? 1 : 0);
+        }
+      }
+    };
 
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [konamiIndex, mode, setMode]); // Dependency array đầy đủ
+
+  // --- 2. LOGIC TRIPLE TAP (MOBILE/DESKTOP CLICK) ---
+  const handleTitleClick = () => {
+    clickCountRef.current += 1;
+
+    // Reset bộ đếm sau 1 giây nếu không bấm tiếp
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 1000);
+
+    // Nếu bấm đủ 3 lần
+    if (clickCountRef.current === 3) {
+      if (mode === "anime") {
+        switchToHanime();
+      } else {
+        switchToAnime();
+      }
+      clickCountRef.current = 0; // Reset ngay sau khi kích hoạt
+    }
+  };
+
+  // --- UI THEME ---
+  const isHanime = mode === "hanime";
   const theme = {
     background: isHanime
-      ? "linear-gradient(135deg, #1a0505 0%, #4c0519 50%, #2d0606 100%)" // Tông đỏ đen cực tối
-      : "linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)", // Tông xanh Navy/Sapphire
-    accent: isHanime ? "#ec4899" : "#3b82f6", // Hồng đậm vs Xanh dương
+      ? "linear-gradient(135deg, #1a0505 0%, #4c0519 50%, #2d0606 100%)"
+      : "linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)",
+    accent: isHanime ? "#ec4899" : "#3b82f6",
     accentGlow: isHanime
       ? "rgba(236, 72, 153, 0.5)"
       : "rgba(59, 130, 246, 0.5)",
@@ -44,12 +124,35 @@ export default function Homepage() {
     >
       {/* Header Section */}
       <div className="mb-5 text-center animate-in fade-in">
-        <h1
-          className="mb-3 display-3 fw-bold"
-          style={{ textShadow: `0 0 20px ${theme.accentGlow}` }}
-        >
-          <span className="text-white">Aniko!</span>
-        </h1>
+        {/* LOGIC HINT: Tooltip ẩn và hiệu ứng cursor pointer */}
+        <div className="relative group d-inline-block">
+          <h1
+            onClick={handleTitleClick}
+            className="mb-3 cursor-pointer display-3 fw-bold user-select-none"
+            style={{
+              textShadow: `0 0 20px ${theme.accentGlow}`,
+              transition: "transform 0.1s",
+            }}
+            title={
+              isHanime ? "Click 3 lần để thoát" : "Hmm... có gì đó bí ẩn ở đây?"
+            }
+            onMouseDown={(e) =>
+              (e.currentTarget.style.transform = "scale(0.95)")
+            }
+            onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            <span className="text-white">Aniko!</span>
+          </h1>
+
+          {/* Hint nâng cao: Dấu chấm nhỏ nhấp nháy */}
+          {!isHanime && (
+            <span
+              className="absolute top-0 w-2 h-2 bg-white rounded-full opacity-50 -right-4 animate-ping"
+              style={{ animationDuration: "3s" }}
+            ></span>
+          )}
+        </div>
+
         <p className="lead text-white-50">
           Cổng thông tin giải trí & Thư viện {isHanime ? "HAnime" : "Anime"} tối
           thượng
@@ -57,10 +160,6 @@ export default function Homepage() {
         <p className="opacity-75 small text-white-50">
           Dữ liệu cập nhật: 09/12/2025
         </p>
-
-        <div className="mt-4">
-          <ModeToggle />
-        </div>
       </div>
 
       {/* Navigation Cards */}
@@ -176,7 +275,7 @@ export default function Homepage() {
       </main>
 
       <footer className="mt-5 opacity-50 text-white-50 small">
-        © 2026 H-Anidle Project. IT Engineer Edition.
+        © 2026 Aniko Project. IT Engineer Edition.
       </footer>
     </div>
   );
