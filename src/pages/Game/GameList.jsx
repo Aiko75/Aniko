@@ -34,28 +34,28 @@ export default function GameList() {
         },
       },
     },
-    {
-      path: "/game/contexto",
-      status: "active",
-      color: "info",
-      localKey: LOCAL_STORAGE_KEYS.CONTEXTO.PROGRESS,
-      modes: {
-        hanime: {
-          id: "hentexto",
-          name: "HenTexto",
-          description:
-            "Contexto phiên bản HAnime. Tìm ra bộ phim bí ẩn qua sự tương đồng.",
-          icon: "🐈‍⬛",
-        },
-        anime: {
-          id: "anitexto",
-          name: "AniTexto",
-          description:
-            "Contexto phiên bản Anime. AI sẽ chỉ dẫn bạn đến bộ Anime bí mật.",
-          icon: "🤖", // Đã thay thế "robot" bằng Emoji
-        },
-      },
-    },
+    // {
+    //   path: "/game/contexto",
+    //   status: "active",
+    //   color: "info",
+    //   localKey: LOCAL_STORAGE_KEYS.CONTEXTO.PROGRESS,
+    //   modes: {
+    //     hanime: {
+    //       id: "hentexto",
+    //       name: "HenTexto",
+    //       description:
+    //         "Contexto phiên bản HAnime. Tìm ra bộ phim bí ẩn qua sự tương đồng.",
+    //       icon: "🐈‍⬛",
+    //     },
+    //     anime: {
+    //       id: "anitexto",
+    //       name: "AniTexto",
+    //       description:
+    //         "Contexto phiên bản Anime. AI sẽ chỉ dẫn bạn đến bộ Anime bí mật.",
+    //       icon: "🤖", // Đã thay thế "robot" bằng Emoji
+    //     },
+    //   },
+    // },
     {
       path: "/game/tictactoe",
       status: "active",

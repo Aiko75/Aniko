@@ -94,6 +94,10 @@ export default function Bingo() {
     const val = cell.value;
     const year = anime.release_year || parseInt(anime.releaseYear?.name || 0);
     const views = anime.views || 0;
+    const censorship = anime.censorship || "";
+    const category = anime.category || "";
+    console.log(censorship, val);
+    console.log(category, val);
 
     switch (cell.type) {
       case "year_eq":
@@ -138,11 +142,10 @@ export default function Bingo() {
           isMatch = anime.title.toLowerCase().includes(val.toLowerCase());
         break;
       case "censorship":
-        isMatch =
-          anime.censorship === val || anime.raw_data?.censorship === val;
+        isMatch = censorship === val;
         break;
       case "category":
-        isMatch = anime.category === val || anime.raw_data?.category === val;
+        isMatch = category === val;
         break;
       default:
         isMatch = false;

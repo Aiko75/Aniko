@@ -55,7 +55,7 @@ export async function GET(request) {
 
     // Lấy các trường cần thiết để hiển thị hint/kết quả
     const query = `
-      SELECT id, title, slug, thumbnail, genres, studios, release_year, views 
+      SELECT id, title, slug, thumbnail, genres, studios, release_year, views, censorship, category
       FROM ${tableName} 
       WHERE id = $1
     `;

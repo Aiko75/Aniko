@@ -44,11 +44,7 @@ export async function POST(request) {
 
     // 1. Tìm bộ anime trong DB theo ID
     // Chỉ lấy các cột cần thiết để tối ưu, hoặc lấy * nếu cần trả về full info
-    const query = `
-      SELECT id, title, genres, studios, release_year, thumbnail, slug 
-      FROM ${tableName} 
-      WHERE id = $1
-    `;
+    const query = `SELECT * FROM ${tableName} WHERE id = $1`;
     const res = await client.query(query, [animeId]);
     const anime = res.rows[0];
 
@@ -73,7 +69,7 @@ export async function POST(request) {
         message = `Bộ này không thuộc ${colAttr.type}: ${colAttr.value}`;
       }
 
-      return NextResponse.json({ correct: false, message });
+      return NextResponse.json({ correct: false, message, anime });
     }
   } catch (error) {
     console.error("Sudoku Check Error:", error);

@@ -6,7 +6,6 @@ export const dynamic = "force-dynamic";
 const GRID_SIZE = 16;
 const CURRENT_YEAR = new Date().getFullYear();
 
-// Helper functions
 const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const randomInt = (min, max) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
@@ -14,12 +13,13 @@ const randomInt = (min, max) =>
 export async function GET(request) {
   let client;
   try {
+    // 1. BẮT MODE TỪ HEADER
     const mode = request.headers.get("app_mode") || "anime";
     const tableName = mode === "hanime" ? "hanimes" : "animes";
 
     client = await pool.connect();
 
-    // 1. Lấy dữ liệu mẫu từ DB (Subquery để distinct trước khi random)
+    // 2. QUERY DỮ LIỆU MẪU (Dùng alias và tối ưu hóa lấy cột đã tách)
     const queries = {
       genres: `
         SELECT val FROM (
@@ -39,7 +39,7 @@ export async function GET(request) {
         SELECT val FROM (
             SELECT DISTINCT release_year as val 
             FROM ${tableName} 
-            WHERE release_year <= ${CURRENT_YEAR}
+            WHERE release_year IS NOT NULL AND release_year <= ${CURRENT_YEAR}
         ) sub_query
         ORDER BY RANDOM() LIMIT 15
       `,
@@ -57,7 +57,6 @@ export async function GET(request) {
 
     const grid = [];
     const usedLabels = new Set();
-
     const types = ["genre", "studio", "year", "view", "meta"];
 
     let safetyLoop = 0;
@@ -66,7 +65,7 @@ export async function GET(request) {
       const type = randomItem(types);
       let cell = null;
 
-      // Logic sinh ô
+      // Logic sinh ô theo Type
       if (type === "genre" && genrePool.length > 0) {
         const val = randomItem(genrePool);
         cell = { type: "genre", label: `Genre: ${val}`, value: val };
@@ -76,10 +75,9 @@ export async function GET(request) {
       } else if (type === "year" && yearPool.length > 0) {
         const subType = randomItem(["eq", "gt", "lt"]);
         const year = randomItem(yearPool);
-
-        if (subType === "eq") {
+        if (subType === "eq")
           cell = { type: "year_eq", label: `Năm ${year}`, value: year };
-        } else if (subType === "gt") {
+        else if (subType === "gt") {
           const y = Math.min(year, CURRENT_YEAR - 1);
           cell = { type: "year_gt", label: `Sau năm ${y}`, value: y };
         } else {
@@ -89,37 +87,42 @@ export async function GET(request) {
       } else if (type === "view") {
         const subType = randomItem(["gt", "lt"]);
         const kView = randomInt(1, 50) * 100;
-        if (subType === "gt") {
-          cell = {
-            type: "views_gt",
-            label: `View > ${kView}K`,
-            value: kView * 1000,
-          };
-        } else {
-          cell = {
-            type: "views_lt",
-            label: `View < ${kView}K`,
-            value: kView * 1000,
-          };
-        }
-      } else if (type === "meta") {
-        const subType = randomItem(["censored", "uncensored", "2d", "3d"]);
-        if (subType === "censored")
-          cell = {
-            type: "censorship",
-            label: "Che (Censored)",
-            value: "censored",
-          };
-        if (subType === "uncensored")
-          cell = {
-            type: "censorship",
-            label: "Không Che (Uncen)",
-            value: "uncensored",
-          };
-        if (subType === "2d")
-          cell = { type: "category", label: "Anime 2D", value: "hen2d" };
-        if (subType === "3d")
-          cell = { type: "category", label: "Anime 3D", value: "hen3d" };
+        cell = {
+          type: subType === "gt" ? "views_gt" : "views_lt",
+          label: `View ${subType === "gt" ? ">" : "<"} ${kView}K`,
+          value: kView * 1000,
+        };
+      }
+      // 3. LOGIC META THEO MODE
+      else if (type === "meta") {
+        const metaPool =
+          mode === "hanime"
+            ? [
+                {
+                  type: "censorship",
+                  label: "Che (Censored)",
+                  value: "censored",
+                },
+                {
+                  type: "censorship",
+                  label: "Không Che (Uncen)",
+                  value: "uncensored",
+                },
+                { type: "category", label: "H-Anime 3D", value: "hen3d" },
+                { type: "category", label: "H-Anime 2D", value: "hen2d" },
+              ]
+            : [
+                { type: "category", label: "Anime", value: "anime" },
+                { type: "category", label: "Cartoon", value: "cartoon" },
+                {
+                  type: "category",
+                  label: "Live-action",
+                  value: "live-action",
+                },
+                { type: "category", label: "Tokusatsu", value: "tokusatsu" },
+              ];
+
+        cell = randomItem(metaPool);
       }
 
       if (cell && !usedLabels.has(cell.label)) {
