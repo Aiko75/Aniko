@@ -16,7 +16,7 @@ export default function List() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const itemsPerPage = 20; // Số lượng skeleton sẽ khớp với số này
+  const itemsPerPage = 20;
   const isInitialized = useRef(false);
 
   // --- STATE ---
@@ -24,10 +24,9 @@ export default function List() {
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Lấy mode từ cookie ngay lúc mount để truyền vào hook
+  // State Mode (Lấy từ Cookie)
   const [currentMode, setCurrentMode] = useState(() => {
-    const saved = Cookies.get("app_mode");
-    return saved || "anime";
+    return Cookies.get("app_mode") || "anime";
   });
 
   useEffect(() => {
@@ -37,15 +36,14 @@ export default function List() {
     }
   }, [currentMode]);
 
-  // --- GỌI HOOK LẤY FILTER OPTIONS ---
+  // Hook Filter
   const { filterOptions, loading: loadingFilters } = useGetFilters(currentMode);
 
-  // State cho UI
+  // UI State
   const [localSearch, setLocalSearch] = useState(searchParams.get("q") || "");
   const currentPage = parseInt(searchParams.get("page") || "1");
-  const [pageInput, setPageInput] = useState(currentPage.toString());
 
-  // Lấy filters từ URL
+  // Filters Memo
   const filters = useMemo(
     () => ({
       genre: searchParams.get("genre") || "All",
@@ -103,7 +101,7 @@ export default function List() {
     fetchLibraryData();
   }, [fetchLibraryData]);
 
-  // --- 2. LOGIC PERSISTENCE ---
+  // --- PERSISTENCE (Giữ nguyên) ---
   useEffect(() => {
     const savedPage = localStorage.getItem(LOCAL_STORAGE_KEYS.LIST.PAGE);
     const urlPage = searchParams.get("page");
@@ -125,7 +123,7 @@ export default function List() {
     }
   }, [currentPage]);
 
-  // --- 3. HELPER: CẬP NHẬT URL ---
+  // --- HELPER: UPDATE QUERY ---
   const updateQuery = useCallback(
     (updates) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -133,13 +131,15 @@ export default function List() {
         if (value && value !== "All") params.set(key, value);
         else params.delete(key);
       });
+      // Nếu không phải là chuyển trang thì reset về trang 1
       if (!updates.page) params.set("page", "1");
+
       router.replace(`${pathname}?${params.toString()}`, { scroll: true });
     },
     [searchParams, pathname, router]
   );
 
-  // --- 4. DEBOUNCE SEARCH ---
+  // --- DEBOUNCE SEARCH (Giữ nguyên) ---
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localSearch !== (searchParams.get("q") || "")) {
@@ -149,32 +149,7 @@ export default function List() {
     return () => clearTimeout(timer);
   }, [localSearch, updateQuery, searchParams]);
 
-  // --- 5. TÍNH TOÁN CỬA SỔ PHÂN TRANG ---
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginationGroups = useMemo(() => {
-    let startL = Math.max(1, currentPage - 2);
-    let endL = Math.min(totalPages, startL + 4);
-    if (endL - startL < 4) startL = Math.max(1, endL - 4);
-    const leftPages = [];
-    for (let i = startL; i <= endL; i++) leftPages.push(i);
-
-    const rightPages = [];
-    const startR = Math.max(1, totalPages - 4);
-    for (let i = startR; i <= totalPages; i++) {
-      if (i > leftPages[leftPages.length - 1]) rightPages.push(i);
-    }
-    return { leftPages, rightPages };
-  }, [currentPage, totalPages]);
-
-  useEffect(() => {
-    setPageInput(currentPage.toString());
-  }, [currentPage]);
-
-  const handlePageJump = (val) => {
-    setPageInput(val);
-    const p = parseInt(val);
-    if (p >= 1 && p <= totalPages) updateQuery({ page: p.toString() });
-  };
 
   return (
     <div
@@ -242,69 +217,22 @@ export default function List() {
           }}
         />
 
-        {/* CONTENT GRID: XỬ LÝ SKELETON Ở ĐÂY */}
+        {/* CONTENT GRID */}
         {isLoading ? (
-          // Grid wrapper dùng class Tailwind để khớp layout với AnimeGrid thật
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {/* Tạo mảng 20 phần tử rỗng để loop */}
             {Array.from({ length: itemsPerPage }).map((_, index) => (
               <AnimeCardSkeleton key={index} />
             ))}
           </div>
         ) : (
-          <AnimeGrid data={activeData} />
-        )}
-
-        {/* PAGINATION */}
-        {totalPages > 1 && (
-          <div className="flex flex-col items-center justify-between gap-4 mt-12 mb-20 md:flex-row">
-            {/* Cụm trang hiện tại (Trái) */}
-            <div className="flex gap-1 p-1 bg-white border shadow-sm rounded-2xl">
-              {paginationGroups.leftPages.map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => updateQuery({ page: pageNum.toString() })}
-                  className={`w-10 h-10 rounded-xl font-bold transition-all ${
-                    currentPage === pageNum
-                      ? "bg-primary text-white scale-105 shadow-md"
-                      : "hover:bg-zinc-100 text-zinc-600"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-            </div>
-
-            {/* Jump Box (Giữa) */}
-            <div className="flex items-center gap-3 px-4 py-2 bg-white border shadow-sm rounded-2xl">
-              <input
-                type="number"
-                className="w-14 p-1 text-center font-bold border-b-2 border-primary outline-none focus:border-blue-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                value={pageInput}
-                onChange={(e) => handlePageJump(e.target.value)}
-              />
-              <span className="text-sm font-bold text-zinc-400">
-                / {totalPages}
-              </span>
-            </div>
-
-            {/* Cụm trang cuối (Phải) */}
-            <div className="flex gap-1 p-1 bg-white border shadow-sm rounded-2xl">
-              {paginationGroups.rightPages.map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => updateQuery({ page: pageNum.toString() })}
-                  className={`w-10 h-10 rounded-xl font-bold transition-all ${
-                    currentPage === pageNum
-                      ? "bg-primary text-white shadow-md"
-                      : "hover:bg-zinc-100 text-zinc-600"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-            </div>
-          </div>
+          /* [UPDATE] Truyền props Pagination vào AnimeGrid */
+          <AnimeGrid
+            data={activeData}
+            isLoading={isLoading}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => updateQuery({ page: page.toString() })}
+          />
         )}
       </main>
     </div>

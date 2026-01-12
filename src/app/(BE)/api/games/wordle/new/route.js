@@ -49,30 +49,24 @@ async function getCachedIds(mode) {
 export async function GET(request) {
   let client;
   try {
-    // Lấy mode từ header (client gửi lên: { app_mode: mode })
     const mode = request.headers.get("app_mode") || "anime";
     const tableName = mode === "hanime" ? "hanimes" : "animes";
-
-    // 1. Lấy danh sách ID từ Cache
     const availableIds = await getCachedIds(mode);
 
     if (!availableIds || availableIds.length === 0) {
       return NextResponse.json(
-        { success: false, message: "No data available (Cache Empty)" },
+        { success: false, message: "Cache Empty" },
         { status: 500 }
       );
     }
 
-    // 2. Chọn ngẫu nhiên 1 ID (CPU xử lý)
     const randomId =
       availableIds[Math.floor(Math.random() * availableIds.length)];
-
-    // 3. Fetch chi tiết từ DB
     client = await pool.connect();
 
-    // Lưu ý: release_year trong DB là int4, genres/studios là jsonb
+    // [OPTIMIZED] Lấy trực tiếp release_year và các metadata đã tách cột
     const query = `
-      SELECT id, title, slug, thumbnail, release_year, views, genres, studios
+      SELECT id, title, slug, thumbnail, release_year, views, genres, studios, censorship, category
       FROM ${tableName}
       WHERE id = $1
     `;
@@ -81,15 +75,12 @@ export async function GET(request) {
 
     if (res.rows.length === 0) {
       return NextResponse.json(
-        { success: false, message: "Target ID not found in DB" },
+        { success: false, message: "Not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: res.rows[0],
-    });
+    return NextResponse.json({ success: true, data: res.rows[0] });
   } catch (error) {
     console.error("❌ Wordle New Game Error:", error);
     return NextResponse.json(

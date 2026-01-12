@@ -120,7 +120,7 @@ export default function Wordle() {
         const newGuess = json.guess;
         setGuesses([newGuess, ...guesses]);
 
-        if (json.result.isCorrect) {
+        if (json.guess.result.isCorrect) {
           setIsWon(true);
         }
       }

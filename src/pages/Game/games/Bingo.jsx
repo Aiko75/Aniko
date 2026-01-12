@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LOCAL_STORAGE_KEYS } from "@/constants/localKey";
 import { api } from "@/app/api/baseJsonApi";
+import BingoDeck from "@/components/game/Bingo/BingoDeck";
+import BingoGrid from "@/components/game/Bingo/BingoGrid";
 
 export default function Bingo() {
   const [grid, setGrid] = useState([]);
@@ -13,26 +15,19 @@ export default function Bingo() {
   const [bingoLines, setBingoLines] = useState([]);
   const [lives, setLives] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  // Mặc định luôn là playing hoặc kết quả, bỏ qua bước setup
   const [gameStatus, setGameStatus] = useState("playing");
-
-  // Mặc định mục tiêu là 2 đường
   const DEFAULT_GOAL = 1;
   const [targetBingoGoal, setTargetBingoGoal] = useState(DEFAULT_GOAL);
-
   const [hintsLeft, setHintsLeft] = useState(3);
   const [activeHintIds, setActiveHintIds] = useState([]);
 
   const isInitialized = useRef(false);
   const STORAGE_KEY = LOCAL_STORAGE_KEYS.BINGO.PROGRESS;
 
-  // --- 1. LOGIC KHÔI PHỤC HOẶC TẠO MỚI GAME ---
+  // --- 1. LOGIC KHÔI PHỤC ---
   useEffect(() => {
     if (isInitialized.current) return;
-
     const savedProgress = localStorage.getItem(STORAGE_KEY);
-
     if (savedProgress) {
       try {
         const data = JSON.parse(savedProgress);
@@ -48,25 +43,20 @@ export default function Bingo() {
           setGameStatus("playing");
           setLoading(false);
         } else {
-          // Nếu save game là đã thắng/thua -> Chơi mới luôn
           initGame(DEFAULT_GOAL);
         }
       } catch (e) {
-        console.error("Lỗi khôi phục, chơi mới:", e);
         initGame(DEFAULT_GOAL);
       }
     } else {
-      // Không có save -> Chơi mới luôn
       initGame(DEFAULT_GOAL);
     }
-
     isInitialized.current = true;
   }, [STORAGE_KEY]);
 
-  // --- 2. LOGIC LƯU TIẾN TRÌNH TỰ ĐỘNG ---
+  // --- 2. LOGIC LƯU ---
   useEffect(() => {
     if (!isInitialized.current || loading) return;
-
     if (gameStatus === "playing") {
       const stateToSave = {
         grid,
@@ -97,13 +87,17 @@ export default function Bingo() {
     STORAGE_KEY,
   ]);
 
-  // --- HÀM CHECK LOGIC (Giữ nguyên) ---
+  // --- HELPER LOGIC ---
   const checkCondition = (anime, cell) => {
     if (!anime) return false;
     let isMatch = false;
     const val = cell.value;
     const year = anime.release_year || parseInt(anime.releaseYear?.name || 0);
     const views = anime.views || 0;
+    const censorship = anime.censorship || "";
+    const category = anime.category || "";
+    console.log(censorship, val);
+    console.log(category, val);
 
     switch (cell.type) {
       case "year_eq":
@@ -137,30 +131,27 @@ export default function Bingo() {
         break;
       case "tag_match":
         if (Array.isArray(anime.tags)) {
-          const inTags = anime.tags.some((t) =>
-            typeof t === "string" ? t === val : t.name === val
-          );
-          if (inTags) isMatch = true;
+          if (
+            anime.tags.some((t) =>
+              typeof t === "string" ? t === val : t.name === val
+            )
+          )
+            isMatch = true;
         }
-        if (!isMatch && anime.title) {
+        if (!isMatch && anime.title)
           isMatch = anime.title.toLowerCase().includes(val.toLowerCase());
-        }
         break;
       case "censorship":
-        isMatch =
-          anime.censorship === val || anime.raw_data?.censorship === val;
+        isMatch = censorship === val;
         break;
       case "category":
-        isMatch = anime.category === val || anime.raw_data?.category === val;
+        isMatch = category === val;
         break;
       default:
         isMatch = false;
     }
-
-    // Check Fallback BE
-    if (!isMatch && anime.matchedCellIds) {
+    if (!isMatch && anime.matchedCellIds)
       isMatch = anime.matchedCellIds.includes(cell.id);
-    }
     return isMatch;
   };
 
@@ -177,15 +168,12 @@ export default function Bingo() {
     [3, 6, 9, 12],
   ];
 
-  // --- 3. KHỞI TẠO GAME MỚI ---
   const initGame = async (goal = DEFAULT_GOAL) => {
     setLoading(true);
     localStorage.removeItem(STORAGE_KEY);
-
     setTargetBingoGoal(goal);
     setLives(10);
-    setHintsLeft(5); // 4 gợi ý
-
+    setHintsLeft(5);
     setSelectedCells([]);
     setBingoLines([]);
     setCurrentIndex(0);
@@ -209,15 +197,12 @@ export default function Bingo() {
     }
   };
 
-  // --- LOGIC HINT ---
   const handleUseHint = () => {
     if (hintsLeft <= 0 || gameStatus !== "playing") return;
     const currentAnime = deck[currentIndex];
-
     const correctIds = grid
       .filter((cell) => checkCondition(currentAnime, cell))
       .map((cell) => cell.id);
-
     const availableCorrectIds = correctIds.filter(
       (id) => !selectedCells.includes(id)
     );
@@ -234,25 +219,18 @@ export default function Bingo() {
       ];
     const allIds = Array.from({ length: 16 }, (_, i) => i);
     const wrongIds = allIds.filter((id) => !correctIds.includes(id));
-    const threeWrongs = [];
-    for (let i = 0; i < 3; i++) {
-      if (wrongIds.length > 0) {
-        const idx = Math.floor(Math.random() * wrongIds.length);
-        threeWrongs.push(wrongIds.splice(idx, 1)[0]);
-      }
-    }
-    const hintBatch = [oneCorrect, ...threeWrongs].sort(
-      () => Math.random() - 0.5
-    );
+    const hintBatch = [
+      oneCorrect,
+      ...wrongIds.sort(() => 0.5 - Math.random()).slice(0, 3),
+    ].sort(() => 0.5 - Math.random());
+
     setActiveHintIds(hintBatch);
     setHintsLeft((prev) => prev - 1);
   };
 
-  // --- LOGIC CLICK ---
   const handleCellClick = (cell) => {
     if (gameStatus !== "playing" || selectedCells.includes(cell.id)) return;
     const currentAnime = deck[currentIndex];
-
     const isCorrect = checkCondition(currentAnime, cell);
 
     if (isCorrect) {
@@ -285,17 +263,13 @@ export default function Bingo() {
         if (!bingoLines.includes(index)) newLines.push(index);
       }
     });
-
     if (newLines.length > 0) {
       const totalLines = [...bingoLines, ...newLines];
       setBingoLines(totalLines);
-      if (totalLines.length >= targetBingoGoal) {
-        setGameStatus("won");
-      }
+      if (totalLines.length >= targetBingoGoal) setGameStatus("won");
     }
   };
 
-  // --- RENDER ---
   if (loading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
@@ -319,11 +293,9 @@ export default function Bingo() {
             Mục tiêu: {targetBingoGoal} Dòng
           </div>
         </div>
-
         <h1 className="hidden text-xl font-black tracking-tighter text-blue-600 md:block">
           ANIME BINGO
         </h1>
-
         <div className="flex items-center gap-4">
           <div className="text-sm font-bold text-slate-500">
             Card:{" "}
@@ -338,122 +310,28 @@ export default function Bingo() {
       </div>
 
       <div className="grid items-start max-w-6xl grid-cols-1 gap-8 px-4 mx-auto md:grid-cols-2">
-        {/* LEFT: DECK */}
-        <div
-          className="flex flex-col items-center sticky-md-top"
-          style={{ top: "80px" }}
-        >
-          {gameStatus === "playing" ? (
-            <div className="w-full max-w-md p-6 text-center transition-all bg-white border shadow-lg rounded-2xl">
-              <img
-                src={deck[currentIndex]?.thumbnail}
-                className="object-cover w-48 h-64 mx-auto mb-4 border shadow-md rounded-xl"
-                alt="cover"
-              />
-              <h3 className="mb-4 text-lg font-bold leading-tight wrap-break-words text-slate-800">
-                {deck[currentIndex]?.title}
-              </h3>
+        {/* LEFT COMPONENT: DECK */}
+        <BingoDeck
+          currentCard={deck[currentIndex]}
+          gameStatus={gameStatus}
+          bingoCount={bingoLines.length}
+          targetGoal={targetBingoGoal}
+          hintsLeft={hintsLeft}
+          onNext={nextCard}
+          onHint={handleUseHint}
+          onRestart={() => initGame(DEFAULT_GOAL)}
+        />
 
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={nextCard}
-                  className="py-2 border btn btn-light rounded-pill fw-bold text-muted"
-                >
-                  Bỏ qua (Skip)
-                </button>
-                <button
-                  onClick={handleUseHint}
-                  disabled={hintsLeft <= 0}
-                  className={`btn rounded-pill fw-bold py-2 ${
-                    hintsLeft > 0
-                      ? "btn-warning shadow"
-                      : "btn-light text-muted"
-                  }`}
-                >
-                  💡 Gợi ý ({hintsLeft})
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="w-full max-w-md p-8 text-center bg-white border shadow-lg rounded-2xl animate-in zoom-in">
-              <div
-                className={`display-1 mb-4 ${
-                  gameStatus === "won" ? "text-success" : "text-danger"
-                }`}
-              >
-                {gameStatus === "won" ? "🏆" : "💀"}
-              </div>
-              <h2
-                className={`font-bold text-3xl mb-2 ${
-                  gameStatus === "won" ? "text-success" : "text-danger"
-                }`}
-              >
-                {gameStatus === "won" ? "BINGO MASTER!" : "GAME OVER"}
-              </h2>
-              <p className="mb-6 text-muted">
-                Bạn đã đạt {bingoLines.length}/{targetBingoGoal} đường Bingo.
-              </p>
-              <button
-                onClick={() => initGame(DEFAULT_GOAL)}
-                className="px-5 shadow-lg btn btn-primary btn-lg rounded-pill"
-              >
-                Chơi lại
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT: GRID */}
-        <div>
-          <div className="flex items-end justify-between mb-4">
-            <h5 className="mb-0 font-bold text-slate-700">Bảng Bingo 4x4</h5>
-            <div className="text-sm font-bold text-blue-600">
-              Đã đạt: {bingoLines.length} / {targetBingoGoal} lines
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-2 aspect-square">
-            {grid.map((cell) => {
-              const isSelected = selectedCells.includes(cell.id);
-              const isHinted = activeHintIds.includes(cell.id);
-
-              return (
-                <button
-                  key={cell.id}
-                  onClick={() => handleCellClick(cell)}
-                  disabled={isSelected || gameStatus !== "playing"}
-                  className={`
-                    p-1 rounded-xl border-2 shadow-sm flex flex-col items-center justify-center text-center text-xs font-bold transition-all h-full
-                    ${
-                      isSelected
-                        ? "bg-green-500 text-white border-green-600 scale-95 shadow-none"
-                        : "bg-white hover:bg-blue-50 text-slate-600"
-                    }
-                    ${
-                      isHinted && !isSelected
-                        ? "border-warning border-4 animate-pulse ring ring-warning ring-opacity-20"
-                        : "border-slate-100"
-                    }
-                  `}
-                >
-                  <span
-                    className={`mb-1 opacity-50 text-[9px] uppercase tracking-tighter ${
-                      isSelected ? "text-white" : ""
-                    }`}
-                  >
-                    {cell.type.replace("_", " ")}
-                  </span>
-                  <div className="line-clamp-3">{cell.label}</div>
-                  {isHinted && !isSelected && (
-                    <div className="text-[8px] mt-1 bg-warning text-dark px-1 rounded">
-                      HINT
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* RIGHT COMPONENT: GRID */}
+        <BingoGrid
+          grid={grid}
+          selectedCells={selectedCells}
+          activeHintIds={activeHintIds}
+          gameStatus={gameStatus}
+          bingoCount={bingoLines.length}
+          targetGoal={targetBingoGoal}
+          onCellClick={handleCellClick}
+        />
       </div>
     </div>
   );

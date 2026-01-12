@@ -24,118 +24,123 @@ export async function POST(request) {
       minView,
       maxView,
     } = filters;
-    const offset = (page - 1) * limit;
+
+    // Validate limit để tránh lỗi chia cho 0 hoặc load quá nặng
+    const safeLimit = Math.max(1, Math.min(parseInt(limit), 100));
+    const offset = (page - 1) * safeLimit;
 
     const tableMap = { anime: "animes", hanime: "hanimes" };
     const tableName = tableMap[mode] || "animes";
+    const alias = "t"; // [FIX] Sử dụng alias cố định ngay từ đầu
 
     client = await pool.connect();
 
     let whereClauses = [];
     let queryParams = [];
 
+    // --- 1. XÂY DỰNG WHERE CLAUSE (Dùng alias 't') ---
+
     // -- Search (Title)
     if (search) {
       queryParams.push(`%${search}%`);
-      whereClauses.push(`${tableName}.title ILIKE $${queryParams.length}`);
+      whereClauses.push(`${alias}.title ILIKE $${queryParams.length}`);
     }
 
-    // --- LOGIC JSONB FILTER ---
-
-    // -- Filter: Genre
+    // -- Filter: Genre (JSONB)
     if (genre && genre !== "All") {
-      // Tạo một JSON object string để so sánh: '[{"name": "NTR"}]'
       const jsonParam = JSON.stringify([{ name: genre }]);
       queryParams.push(jsonParam);
-      // Toán tử @> kiểm tra xem JSONB bên trái có chứa JSON bên phải không
-      whereClauses.push(`${tableName}.genres @> $${queryParams.length}::jsonb`);
+      whereClauses.push(`${alias}.genres @> $${queryParams.length}::jsonb`);
     }
 
-    // -- Filter: Studio
+    // -- Filter: Studio (JSONB)
     if (studio && studio !== "All") {
       const jsonParam = JSON.stringify([{ name: studio }]);
       queryParams.push(jsonParam);
-      whereClauses.push(
-        `${tableName}.studios @> $${queryParams.length}::jsonb`
-      );
+      whereClauses.push(`${alias}.studios @> $${queryParams.length}::jsonb`);
     }
 
-    // -- Filter: Tag
+    // -- Filter: Tag (JSONB)
     if (tag && tag !== "All") {
       const jsonParam = JSON.stringify([{ name: tag }]);
       queryParams.push(jsonParam);
-      whereClauses.push(`${tableName}.tags @> $${queryParams.length}::jsonb`);
+      whereClauses.push(`${alias}.tags @> $${queryParams.length}::jsonb`);
     }
 
-    // -- Filter: Year & Views (Giữ nguyên như cũ)
+    // -- Filter: Year
     if (minYear) {
       queryParams.push(parseInt(minYear));
-      whereClauses.push(`${tableName}.release_year >= $${queryParams.length}`);
+      whereClauses.push(`${alias}.release_year >= $${queryParams.length}`);
     }
     if (maxYear) {
       queryParams.push(parseInt(maxYear));
-      whereClauses.push(`${tableName}.release_year <= $${queryParams.length}`);
+      whereClauses.push(`${alias}.release_year <= $${queryParams.length}`);
     }
+
+    // -- Filter: Views
     if (minView) {
       queryParams.push(parseInt(minView));
-      whereClauses.push(`${tableName}.views >= $${queryParams.length}`);
+      whereClauses.push(`${alias}.views >= $${queryParams.length}`);
     }
     if (maxView) {
       queryParams.push(parseInt(maxView));
-      whereClauses.push(`${tableName}.views <= $${queryParams.length}`);
+      whereClauses.push(`${alias}.views <= $${queryParams.length}`);
     }
 
     const whereString =
       whereClauses.length > 0 ? whereClauses.join(" AND ") : "1=1";
 
-    // Sorting
-    let orderBy = `${tableName}.created_at DESC`;
+    // --- 2. SORTING (Dùng alias 't') ---
+    let orderBy = `${alias}.created_at DESC`;
     switch (sortBy) {
       case "oldest":
-        orderBy = `${tableName}.release_year ASC, ${tableName}.created_at ASC`;
+        orderBy = `${alias}.release_year ASC, ${alias}.created_at ASC`;
         break;
       case "newest":
-        orderBy = `${tableName}.release_year DESC, ${tableName}.created_at DESC`;
+        orderBy = `${alias}.release_year DESC, ${alias}.created_at DESC`;
         break;
       case "most_viewed":
-        orderBy = `${tableName}.views DESC`;
+        orderBy = `${alias}.views DESC`;
         break;
       case "least_viewed":
-        orderBy = `${tableName}.views ASC`;
+        orderBy = `${alias}.views ASC`;
         break;
     }
 
-    // Count Query
-    const countQuery = `SELECT COUNT(*) FROM ${tableName} WHERE ${whereString}`;
+    // --- 3. EXECUTE QUERIES ---
+
+    // A. Count Query (Giữ nguyên)
+    const countQuery = `SELECT COUNT(*) FROM ${tableName} ${alias} WHERE ${whereString}`;
     const countRes = await client.query(countQuery, queryParams);
     const totalItems = parseInt(countRes.rows[0].count);
-    const totalPages = Math.ceil(totalItems / limit);
+    const totalPages = Math.ceil(totalItems / safeLimit);
 
-    // Data Query
-    // Lưu ý: Cột genres, studios, tags giờ trả về nguyên cục JSON Object.
-    // Frontend của bạn sẽ nhận được [{id:..., name: "NTR"}, ...].
-    // Nếu Frontend chỉ muốn hiện tên, bạn map nó ở FE hoặc xử lý SQL ở đây.
-    // Để nguyên JSON trả về cho FE là linh hoạt nhất (lấy được cả slug/thumbnail nếu cần).
+    // Cập nhật lại câu query trong API List
     const dataQuery = `
-      SELECT 
-        m.*,
-        json_build_object('name', m.release_year) as "releaseYear"
-      FROM ${tableName} m
-      WHERE ${whereString.replace(new RegExp(tableName, "g"), "m")}
-      ORDER BY ${orderBy.replace(new RegExp(tableName, "g"), "m")}
-      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
-    `;
+    SELECT 
+      ${alias}.*,
+      ${alias}.release_year AS "release_year" -- Đảm bảo lấy đúng tên cột từ DB
+    FROM ${tableName} ${alias}
+    WHERE ${whereString}
+    ORDER BY ${orderBy}
+    LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
+`;
 
     const dataRes = await client.query(dataQuery, [
       ...queryParams,
-      limit,
+      safeLimit,
       offset,
     ]);
 
     return NextResponse.json({
       success: true,
       data: dataRes.rows,
-      pagination: { page, limit, totalItems, totalPages },
+      pagination: {
+        page: parseInt(page),
+        limit: safeLimit,
+        totalItems,
+        totalPages,
+      },
     });
   } catch (error) {
     console.error("❌ API Error:", error);

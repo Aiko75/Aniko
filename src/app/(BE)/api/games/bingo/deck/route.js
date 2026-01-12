@@ -21,13 +21,11 @@ const checkMatch = (anime, cell) => {
       return Array.isArray(anime.genres) && anime.genres.includes(cell.value);
     case "studio":
       return Array.isArray(anime.studios) && anime.studios.includes(cell.value);
-
-    // SỬA: Chỉ lấy từ raw_data
     case "censorship":
-      return anime.raw_data?.censorship === cell.value;
+      return anime.censorship === cell.value;
 
     case "category":
-      return anime.raw_data?.category === cell.value;
+      return anime.category === cell.value;
 
     default:
       return false;
@@ -45,10 +43,7 @@ export async function POST(request) {
 
     // 1. LẤY TOÀN BỘ DATA (FULL SCAN)
     // Đã bỏ cột 'censorship' và 'category' để tránh lỗi SQL
-    const query = `
-      SELECT id, title, release_year, views, genres, studios, raw_data, tags, thumbnail, slug
-      FROM ${tableName}
-    `;
+    const query = `SELECT * FROM ${tableName}`;
 
     const dbRes = await client.query(query);
     let rawData = dbRes.rows;

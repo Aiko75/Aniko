@@ -19,20 +19,7 @@ export async function POST(request) {
 
     client = await pool.connect();
 
-    // [UPDATE] Lấy censorship từ raw_data (raw_data->>'censorship')
-    const query = `
-      SELECT 
-        id, 
-        title, 
-        release_year, 
-        views, 
-        genres, 
-        studios, 
-        thumbnail,
-        raw_data->>'censorship' as censorship 
-      FROM ${tableName}
-      WHERE id IN ($1, $2)
-    `;
+    const query = `SELECT * FROM ${tableName} WHERE id IN ($1, $2)`;
 
     const res = await client.query(query, [guessId, targetId]);
     const rows = res.rows;
@@ -49,25 +36,26 @@ export async function POST(request) {
 
     // --- LOGIC SO SÁNH ---
 
-    // A. Năm (Year)
-    const gYear = parseInt(guessAnime.release_year || 0);
-    const tYear = parseInt(targetAnime.release_year || 0);
+    // A. Năm (Year) - release_year giờ đã là số nguyên (int4) từ DB
+    const gYear = guessAnime.release_year || 0;
+    const tYear = targetAnime.release_year || 0;
     let yearStatus = "correct";
     if (gYear < tYear) yearStatus = "higher";
     if (gYear > tYear) yearStatus = "lower";
 
     // B. Views
-    const gViews = parseInt(guessAnime.views || 0);
-    const tViews = parseInt(targetAnime.views || 0);
+    const gViews = guessAnime.views || 0;
+    const tViews = targetAnime.views || 0;
     let viewStatus = "correct";
     if (gViews < tViews) viewStatus = "higher";
     if (gViews > tViews) viewStatus = "lower";
 
-    // C. Censorship (So sánh string 'censored' vs 'uncensored')
-    // Nếu null thì coi như match (cho trường hợp anime thường)
-    const gCensor = guessAnime.censorship || "";
-    const tCensor = targetAnime.censorship || "";
-    const isCensorCorrect = gCensor === tCensor;
+    // C. Censorship - So sánh trực tiếp từ cột Text
+    const isCensorCorrect =
+      (guessAnime.censorship || "") === (targetAnime.censorship || "");
+
+    const isCategoryCorrect =
+      (guessAnime.category || "") === (targetAnime.category || "");
 
     // D. Helper xử lý JSON Array
     const extractNames = (arr) => {
@@ -98,7 +86,8 @@ export async function POST(request) {
           isStudioCorrect,
           isGenreCorrect,
           matchingGenres,
-          isCensorCorrect, // Flag cho FE
+          isCensorCorrect,
+          isCategoryCorrect,
         },
       },
     });
