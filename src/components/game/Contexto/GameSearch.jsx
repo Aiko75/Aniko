@@ -1,6 +1,6 @@
 "use client";
 
-import { api } from "@/app/api/baseJsonApi";
+import { api } from "@/lib/api/baseJsonApi";
 import { useState, useEffect, useRef } from "react";
 
 export default function GameSearch({ onGuess, disabled }) {
