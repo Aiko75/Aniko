@@ -15,7 +15,8 @@ function normalizeConnectionString(rawUrl) {
 
 if (!global.pool) {
   const connectionString = normalizeConnectionString(process.env.DATABASE_URL);
-  const ssl = process.env.PGSSL === "disable" ? false : { rejectUnauthorized: false };
+  const ssl =
+    process.env.PGSSL === "disable" ? false : { rejectUnauthorized: false };
 
   global.pool = new Pool({
     connectionString,

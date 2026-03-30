@@ -100,6 +100,21 @@ export default function GameList() {
         },
       },
     },
+    {
+      path: "/game/anirank",
+      status: "active",
+      color: "warning",
+      localKey: null,
+      modes: {
+        anime: {
+          id: "anirank",
+          name: "AniRank",
+          description:
+            "Tenaball phiên bản Anime. Trả lời câu hỏi về top anime theo thể loại, studio, năm!",
+          icon: "🏆",
+        },
+      },
+    },
   ];
 
   // --- LOGIC ĐIỀU HƯỚNG ---
