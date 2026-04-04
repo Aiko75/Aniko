@@ -2,16 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import "bootstrap/dist/css/bootstrap.min.css";
 import { LOCAL_STORAGE_KEYS } from "@/constants/localKey";
 import { useMode } from "@/context/ModeContext";
-import GameCard from "@/components/game/GameCard"; // Import component con
+import GameCard from "@/components/ui/GameCard";
+import { Box, Container, Typography, Button, Grid, Stack } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function GameList() {
   const router = useRouter();
   const { mode } = useMode();
 
-  // --- CẤU HÌNH DATA (Icon đã được đưa trực tiếp vào đây) ---
+  // --- CẤU HÌNH DATA ---
   const gamesData = [
     {
       path: "/game/wordle",
@@ -22,8 +23,7 @@ export default function GameList() {
         hanime: {
           id: "hanidle",
           name: "H-Anidle",
-          description:
-            "Thử thách kiến thức văn hóa 'nhật bản'. Đoán tên phim dựa trên gợi ý.",
+          description: "Thử thách kiến thức văn hóa 'nhật bản'. Đoán tên phim dựa trên gợi ý.",
           icon: "🧩",
         },
         anime: {
@@ -34,28 +34,6 @@ export default function GameList() {
         },
       },
     },
-    // {
-    //   path: "/game/contexto",
-    //   status: "active",
-    //   color: "info",
-    //   localKey: LOCAL_STORAGE_KEYS.CONTEXTO.PROGRESS,
-    //   modes: {
-    //     hanime: {
-    //       id: "hentexto",
-    //       name: "HenTexto",
-    //       description:
-    //         "Contexto phiên bản HAnime. Tìm ra bộ phim bí ẩn qua sự tương đồng.",
-    //       icon: "🐈‍⬛",
-    //     },
-    //     anime: {
-    //       id: "anitexto",
-    //       name: "AniTexto",
-    //       description:
-    //         "Contexto phiên bản Anime. AI sẽ chỉ dẫn bạn đến bộ Anime bí mật.",
-    //       icon: "🤖", // Đã thay thế "robot" bằng Emoji
-    //     },
-    //   },
-    // },
     {
       path: "/game/tictactoe",
       status: "active",
@@ -65,38 +43,48 @@ export default function GameList() {
         hanime: {
           id: "hengrid",
           name: "HenGrid",
-          description:
-            "Immaculate Grid phiên bản người lớn. Điền vào ô trống theo tiêu chí.",
+          description: "Immaculate Grid phiên bản người lớn. Điền vào ô trống theo tiêu chí.",
           icon: "👅",
         },
         anime: {
           id: "anigrid",
           name: "AniGrid",
-          description:
-            "Thử thách kiến thức tổng hợp. Tìm Anime thỏa mãn 2 điều kiện giao nhau.",
-          icon: "🧠", // Đã thay thế "wk" bằng Emoji
+          description: "Thử thách kiến thức tổng hợp. Tìm Anime thỏa mãn 2 điều kiện giao nhau.",
+          icon: "🧠",
         },
       },
     },
     {
       path: "/game/bingo",
       status: "active",
-      color: "danger",
+      color: "error",
       localKey: LOCAL_STORAGE_KEYS.BINGO.PROGRESS,
       modes: {
         hanime: {
           id: "hengo",
           name: "Hengo",
-          description:
-            "Bingo phiên bản HAnime. Quay số và tìm vận may của bạn.",
+          description: "Bingo phiên bản HAnime. Quay số và tìm vận may của bạn.",
           icon: "🥀",
         },
         anime: {
           id: "anibingo",
           name: "AniBingo",
-          description:
-            "Bingo Anime vui vẻ. Sưu tập các waifu/husbando để chiến thắng.",
-          icon: "🍀", // Đã thay thế "ix" bằng Emoji
+          description: "Bingo Anime vui vẻ. Sưu tập các waifu/husbando để chiến thắng.",
+          icon: "🍀",
+        },
+      },
+    },
+    {
+      path: "/game/anirank",
+      status: "active",
+      color: "warning",
+      localKey: null,
+      modes: {
+        anime: {
+          id: "anirank",
+          name: "AniRank",
+          description: "Tenaball phiên bản Anime. Trả lời câu hỏi về top anime theo thể loại, studio, năm!",
+          icon: "🏆",
         },
       },
     },
@@ -121,55 +109,68 @@ export default function GameList() {
       : "linear-gradient(to bottom right, #141E30, #243B55)";
 
   return (
-    <div
-      className="py-5 transition-all duration-500 min-vh-100 w-100"
-      style={{
+    <Box
+      sx={{
+        py: 6,
+        minHeight: "100vh",
         background: bgTheme,
         color: "white",
         transition: "background 0.5s ease",
       }}
     >
-      <div className="container">
+      <Container maxWidth="lg">
         {/* Header */}
-        <div className="mb-5 d-flex align-items-center animate-in fade-in justify-content-between">
-          <div className="d-flex align-items-center">
-            <Link
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", md: "center" }}
+          spacing={3}
+          mb={6}
+          sx={{ animation: "fade-in 0.5s ease" }}
+        >
+          <Box display="flex" alignItems="center" gap={3}>
+            <Button
+              component={Link}
               href="/"
-              className="px-3 btn btn-outline-light btn-sm rounded-pill me-3"
+              variant="outlined"
+              color="inherit"
+              startIcon={<ArrowBackIcon />}
+              sx={{ borderRadius: "20px", fontWeight: "bold", textTransform: "none" }}
             >
-              &larr; Home
-            </Link>
-            <div>
-              <h1 className="mb-0 fw-bold">
+              Home
+            </Button>
+            <Box>
+              <Typography variant="h3" fontWeight="bold">
                 Game Center {mode === "hanime" ? "🔞" : "🎮"}
-              </h1>
-              <p className="mb-0 text-white-50">
+              </Typography>
+              <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)" }}>
                 {mode === "hanime"
                   ? "Khu vực giải trí dành cho người trên 18 tuổi."
                   : "Thử thách kiến thức Anime của bạn."}
-              </p>
-            </div>
-          </div>
-        </div>
+              </Typography>
+            </Box>
+          </Box>
+        </Stack>
 
-        {/* Game Grid - Sử dụng Component Con */}
-        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {/* Game Grid */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:gap-8">
           {gamesData.map((game, index) => {
-            // Lấy data cụ thể theo mode
             const currentData = game.modes[mode];
+            if (!currentData) return null; // Ẩn game nếu mode không hỗ trợ
 
             return (
-              <GameCard
-                key={currentData.id || index}
-                gameCommon={game}
-                gameData={currentData}
-                currentMode={mode}
-                onNavigate={handleGameNavigation}
-              />
+              <div key={currentData.id || index} className="h-full">
+                <GameCard
+                  gameCommon={game}
+                  gameData={currentData}
+                  currentMode={mode}
+                  onNavigate={handleGameNavigation}
+                />
+              </div>
             );
           })}
         </div>
-      </div>
-    </div>
+      </Container>
+    </Box>
   );
 }

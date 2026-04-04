@@ -6,6 +6,19 @@ import { LOCAL_STORAGE_KEYS } from "@/constants/localKey";
 import { api } from "@/lib/api/baseJsonApi";
 import BingoDeck from "@/components/game/Bingo/BingoDeck";
 import BingoGrid from "@/components/game/Bingo/BingoGrid";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  AppBar,
+  Toolbar,
+  Chip,
+  Stack,
+  Grid,
+  CircularProgress
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function Bingo() {
   const [grid, setGrid] = useState([]);
@@ -272,67 +285,95 @@ export default function Bingo() {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="spinner-border text-primary"></div>
-        <div className="ms-3 fw-bold text-muted">Đang chia bài...</div>
-      </div>
+      <Box display="flex" alignItems="center" justifyContent="center" minHeight="100vh" bgcolor="#f8fafc">
+        <Stack direction="row" spacing={2} alignItems="center">
+          <CircularProgress color="primary" size={30} />
+          <Typography fontWeight="bold" color="text.secondary">
+            Đang chia bài...
+          </Typography>
+        </Stack>
+      </Box>
     );
 
   return (
-    <div className="min-h-screen pb-20 bg-slate-50">
+    <Box sx={{ minHeight: "100vh", pb: 10, bgcolor: "#f8fafc" }}>
       {/* HEADER */}
-      <div className="sticky top-0 z-40 flex items-center justify-between max-w-6xl p-3 mx-auto mb-6 bg-white border-b shadow-sm">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/game"
-            className="px-3 btn btn-sm btn-outline-secondary rounded-pill"
+      <AppBar position="sticky" color="inherit" elevation={1} sx={{ zIndex: 40, mb: 4 }}>
+        <Toolbar sx={{ justifyContent: "space-between", maxWidth: 1200, width: "100%", mx: "auto", px: { xs: 2, md: 4 } }}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Button
+              component={Link}
+              href="/game"
+              variant="outlined"
+              color="inherit"
+              startIcon={<ArrowBackIcon />}
+              sx={{ borderRadius: "20px", textTransform: "none" }}
+            >
+              Back
+            </Button>
+            <Chip
+              label={`Mục tiêu: ${targetBingoGoal} Dòng`}
+              color="primary"
+              variant="outlined"
+              sx={{ fontWeight: "bold", bgcolor: "primary.50" }}
+            />
+          </Stack>
+
+          <Typography
+            variant="h6"
+            fontWeight={900}
+            color="primary.main"
+            sx={{ display: { xs: "none", md: "block" }, letterSpacing: "-0.5px" }}
           >
-            Back
-          </Link>
-          <div className="px-3 py-2 font-bold border badge bg-primary bg-opacity-10 text-primary border-primary rounded-pill">
-            Mục tiêu: {targetBingoGoal} Dòng
-          </div>
-        </div>
-        <h1 className="hidden text-xl font-black tracking-tighter text-blue-600 md:block">
-          ANIME BINGO
-        </h1>
-        <div className="flex items-center gap-4">
-          <div className="text-sm font-bold text-slate-500">
-            Card:{" "}
-            <span className="text-dark">
-              {currentIndex + 1}/{deck.length}
-            </span>
-          </div>
-          <div className="px-3 py-2 shadow-sm badge bg-danger rounded-pill fs-6">
-            ❤️ {lives}
-          </div>
-        </div>
-      </div>
+            ANIME BINGO
+          </Typography>
 
-      <div className="grid items-start max-w-6xl grid-cols-1 gap-8 px-4 mx-auto md:grid-cols-2">
-        {/* LEFT COMPONENT: DECK */}
-        <BingoDeck
-          currentCard={deck[currentIndex]}
-          gameStatus={gameStatus}
-          bingoCount={bingoLines.length}
-          targetGoal={targetBingoGoal}
-          hintsLeft={hintsLeft}
-          onNext={nextCard}
-          onHint={handleUseHint}
-          onRestart={() => initGame(DEFAULT_GOAL)}
-        />
+          <Stack direction="row" spacing={3} alignItems="center">
+            <Typography variant="body2" fontWeight="bold" color="text.secondary">
+              Card:{" "}
+              <Box component="span" color="text.primary">
+                {currentIndex + 1}/{deck.length}
+              </Box>
+            </Typography>
+            <Chip
+              label={`❤️ ${lives}`}
+              color="error"
+              sx={{ fontWeight: "bold", fontSize: "1rem" }}
+            />
+          </Stack>
+        </Toolbar>
+      </AppBar>
 
-        {/* RIGHT COMPONENT: GRID */}
-        <BingoGrid
-          grid={grid}
-          selectedCells={selectedCells}
-          activeHintIds={activeHintIds}
-          gameStatus={gameStatus}
-          bingoCount={bingoLines.length}
-          targetGoal={targetBingoGoal}
-          onCellClick={handleCellClick}
-        />
-      </div>
-    </div>
+      <Container maxWidth="xl" sx={{ display: "flex", justifyContent: "center" }}>
+        <Grid container spacing={{ xs: 4, md: 8 }} justifyContent="center" alignItems="flex-start" sx={{ maxWidth: 1000 }}>
+          {/* LEFT COMPONENT: DECK */}
+          <Grid item xs={12} md="auto" display="flex" justifyContent="center" width={{ xs: "100%", md: "auto" }}>
+            <BingoDeck
+              currentCard={deck[currentIndex]}
+              gameStatus={gameStatus}
+              bingoCount={bingoLines.length}
+              targetGoal={targetBingoGoal}
+              hintsLeft={hintsLeft}
+              onNext={nextCard}
+              onHint={handleUseHint}
+              onRestart={() => initGame(DEFAULT_GOAL)}
+            />
+          </Grid>
+
+          {/* RIGHT COMPONENT: GRID */}
+          <Grid item xs={12} md="auto" display="flex" justifyContent="center" width={{ xs: "100%", md: "auto" }}>
+            <BingoGrid
+              grid={grid}
+              selectedCells={selectedCells}
+              activeHintIds={activeHintIds}
+              gameStatus={gameStatus}
+              bingoCount={bingoLines.length}
+              targetGoal={targetBingoGoal}
+              onCellClick={handleCellClick}
+            />
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
   );
 }

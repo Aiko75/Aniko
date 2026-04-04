@@ -1,5 +1,7 @@
 "use client";
 
+import { Box, Typography, ButtonBase } from "@mui/material";
+
 export default function BingoGrid({
   grid,
   selectedCells,
@@ -10,55 +12,107 @@ export default function BingoGrid({
   onCellClick,
 }) {
   return (
-    <div>
-      <div className="flex items-end justify-between mb-4">
-        <h5 className="mb-0 font-bold text-slate-700">Bảng Bingo 4x4</h5>
-        <div className="text-sm font-bold text-blue-600">
+    <Box sx={{ width: "100%", maxWidth: 500, mx: "auto" }}>
+      <Box display="flex" alignItems="flex-end" justifyContent="space-between" mb={2} px={1}>
+        <Typography variant="h6" fontWeight="bold" color="text.primary">
+          Bảng Bingo 4x4
+        </Typography>
+        <Typography variant="body2" fontWeight="bold" color="primary.main">
           Đã đạt: {bingoCount} / {targetGoal} lines
-        </div>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className="grid grid-cols-4 gap-2 aspect-square">
+      <Box
+        display="grid"
+        gridTemplateColumns="repeat(4, 1fr)"
+        gap={1}
+        sx={{
+          width: "100%",
+          aspectRatio: "1 / 1",
+          margin: "0 auto",
+        }}
+      >
         {grid.map((cell) => {
           const isSelected = selectedCells.includes(cell.id);
           const isHinted = activeHintIds.includes(cell.id);
 
           return (
-            <button
+            <ButtonBase
               key={cell.id}
               onClick={() => onCellClick(cell)}
               disabled={isSelected || gameStatus !== "playing"}
-              className={`
-                p-1 rounded-xl border-2 shadow-sm flex flex-col items-center justify-center text-center text-xs font-bold transition-all h-full
-                ${
-                  isSelected
-                    ? "bg-green-500 text-white border-green-600 scale-95 shadow-none"
-                    : "bg-white hover:bg-blue-50 text-slate-600"
-                }
-                ${
-                  isHinted && !isSelected
-                    ? "border-warning border-4 animate-pulse ring ring-warning ring-opacity-20"
-                    : "border-slate-100"
-                }
-              `}
+              sx={{
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                p: 1,
+                borderRadius: 2,
+                border: "2px solid",
+                borderColor: isSelected ? "success.main" : isHinted ? "warning.main" : "divider",
+                bgcolor: isSelected ? "success.main" : "background.paper",
+                color: isSelected ? "white" : "text.primary",
+                boxShadow: isSelected ? "none" : 1,
+                transform: isSelected ? "scale(0.95)" : "none",
+                transition: "all 0.2s ease-in-out",
+                width: "100%",
+                height: "100%",
+                "&:hover": {
+                  bgcolor: isSelected ? "success.main" : "primary.50",
+                },
+                ...(isHinted && !isSelected && {
+                  bgcolor: "warning.50",
+                  animation: "pulse 1.5s infinite",
+                }),
+              }}
             >
-              <span
-                className={`mb-1 opacity-50 text-[9px] uppercase tracking-tighter ${
-                  isSelected ? "text-white" : ""
-                }`}
+              <Typography
+                variant="caption"
+                sx={{
+                  opacity: 0.6,
+                  fontSize: "0.6rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "-0.5px",
+                  lineHeight: 1,
+                  mb: 0.5,
+                  fontWeight: "bold"
+                }}
               >
                 {cell.type.replace("_", " ")}
-              </span>
-              <div className="line-clamp-3">{cell.label}</div>
+              </Typography>
+              <Typography
+                variant="body2"
+                fontWeight="bold"
+                sx={{
+                  display: "-webkit-box",
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                  lineHeight: 1.2,
+                }}
+              >
+                {cell.label}
+              </Typography>
               {isHinted && !isSelected && (
-                <div className="text-[8px] mt-1 bg-warning text-dark px-1 rounded">
+                <Box
+                  sx={{
+                    fontSize: "0.5rem",
+                    mt: 1,
+                    bgcolor: "warning.main",
+                    color: "warning.contrastText",
+                    px: 0.5,
+                    borderRadius: 0.5,
+                    fontWeight: "bold",
+                  }}
+                >
                   HINT
-                </div>
+                </Box>
               )}
-            </button>
+            </ButtonBase>
           );
         })}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

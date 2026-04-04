@@ -1,41 +1,34 @@
 "use client";
 
+import { Card, CardContent, Skeleton, Box } from "@mui/material";
+
 export default function AnimeCardSkeleton() {
   return (
-    <div className="card h-100 border-0 shadow-sm" aria-hidden="true">
-      {/* Khung ảnh Thumbnail (Giữ tỷ lệ giống AnimeCard thật) */}
-      <div
-        className="position-relative w-100 bg-secondary bg-opacity-10"
-        style={{ paddingTop: "140%" }}
-      >
-        <div className="placeholder-glow w-100 h-100 position-absolute top-0 start-0">
-          <span className="placeholder w-100 h-100 bg-secondary opacity-25"></span>
-        </div>
+    <Card elevation={0} sx={{ height: "100%", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+      {/* Khung ảnh Thumbnail bằng Tailwind */}
+      <div className="relative w-full aspect-[3/4]">
+        <Skeleton
+          variant="rectangular"
+          animation="wave"
+          sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+        />
       </div>
 
-      <div className="card-body d-flex flex-column">
-        {/* Khung Tiêu đề (2 dòng) */}
-        <h5 className="card-title placeholder-glow mb-3">
-          <span className="placeholder col-12 bg-secondary opacity-25 rounded"></span>
-          {/* <span className="placeholder col-8 bg-secondary opacity-25 rounded"></span> */}
-        </h5>
+      <CardContent sx={{ display: "flex", flexDirection: "column", height: "100%", p: 1.5, "&:last-child": { pb: 1.5 } }}>
+        {/* Khung Tiêu đề */}
+        <Box mb={2}>
+          <Skeleton variant="text" animation="wave" height={20} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="text" animation="wave" width="80%" height={20} sx={{ borderRadius: 1 }} />
+        </Box>
 
-        <div className="mt-auto">
+        <Box mt="auto">
           {/* Khung Metadata (Năm & View) */}
-          <div className="d-flex justify-content-between mb-3 placeholder-glow">
-            <span className="placeholder col-3 bg-secondary opacity-25 rounded"></span>
-            <span className="placeholder col-3 bg-secondary opacity-25 rounded"></span>
-          </div>
-
-          {/* Khung Button */}
-          {/* <div className="placeholder-glow">
-            <span
-              className="placeholder col-12 btn btn-sm bg-secondary opacity-25 rounded-pill"
-              style={{ height: "32px" }}
-            ></span>
-          </div> */}
-        </div>
-      </div>
-    </div>
+          <Box display="flex" justifyContent="space-between">
+            <Skeleton variant="text" animation="wave" width="30%" height={15} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="text" animation="wave" width="30%" height={15} sx={{ borderRadius: 1 }} />
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
   );
 }

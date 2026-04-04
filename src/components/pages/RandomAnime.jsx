@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import AnimeCard from "@/components/list/AnimeCard";
+import AnimeCard from "@/components/ui/AnimeCard";
 import AnimeCardSkeleton from "@/components/ui/AnimeCardSkeleton";
 import { api } from "@/lib/api/baseJsonApi";
+import { Box, Container, Stack, Button, Typography, Chip, Grid, Alert } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 export default function Random() {
   const [animes, setAnimes] = useState([]);
@@ -30,81 +33,101 @@ export default function Random() {
   };
 
   return (
-    <div className="container py-5 min-vh-100">
+    <Container maxWidth="lg" sx={{ py: 6, minHeight: "100vh" }}>
       {/* Navigation Back */}
-      <div className="mb-4 d-flex justify-content-between align-items-center">
-        <Link
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
+        <Button
+          component={Link}
           href="/list"
-          className="px-3 btn btn-outline-secondary btn-sm rounded-pill"
+          variant="outlined"
+          color="inherit"
+          size="small"
+          startIcon={<ArrowBackIcon />}
+          sx={{ borderRadius: "20px", textTransform: "none", borderColor: "divider", color: "text.secondary" }}
         >
-          &larr; Quay lại thư viện
-        </Link>
-        <span className="border badge bg-light text-dark">
-          Mode: Batch Summon x20
-        </span>
-      </div>
+          Quay lại thư viện
+        </Button>
+        <Chip label="Mode: Batch Summon x20" variant="outlined" sx={{ fontWeight: "bold" }} />
+      </Stack>
 
-      <div className="mb-5 text-center">
-        <h1 className="mb-3 display-5 fw-bold text-primary">
+      <Box textAlign="center" mb={6}>
+        <Typography variant="h3" fontWeight="bold" color="primary" mb={2}>
           🎰 Gacha 210 Time
-        </h1>
-        <p className="mb-4 text-muted">
+        </Typography>
+        <Typography variant="body1" color="text.secondary" mb={4}>
           Nhân phẩm của bạn thế nào? Quay thử 20 bộ nhé!
-        </p>
+        </Typography>
 
-        {/* Button Random Bootstrap */}
-        <button
+        {/* Button Random */}
+        <Button
           onClick={fetchRandomAnime}
           disabled={loading}
-          className={`btn btn-lg px-5 py-3 rounded-pill fw-bold shadow-sm transition-all ${
-            loading ? "btn-secondary cursor-not-allowed" : "btn-gradient-purple"
-          }`}
-          style={{
-            background: loading
-              ? ""
-              : "linear-gradient(45deg, #6f42c1, #0d6efd)",
-            color: "white",
-            border: "none",
+          variant="contained"
+          size="large"
+          startIcon={!loading && <AutoAwesomeIcon />}
+          sx={{
+            px: 6,
+            py: 2,
+            borderRadius: "50px",
+            fontWeight: "bold",
+            fontSize: "1.1rem",
+            textTransform: "none",
+            background: loading ? "grey.500" : "linear-gradient(45deg, #6f42c1, #0d6efd)",
+            transition: "all 0.3s ease",
+            boxShadow: loading ? 0 : 4,
+            "&:hover": {
+              boxShadow: 6,
+              transform: "translateY(-2px)"
+            }
           }}
         >
-          {loading ? "Đang triệu hồi..." : "🎲 Triệu hồi x20 ngay!"}
-        </button>
-      </div>
+          {loading ? "Đang triệu hồi..." : "Triệu hồi x20 ngay!"}
+        </Button>
+      </Box>
 
       {/* --- KHU VỰC HIỂN THỊ KẾT QUẢ --- */}
 
-      <div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-4 animate-in fade-in">
-        {/* CASE 1: ĐANG LOADING -> HIỂN THỊ SKELETON */}
-        {loading &&
-          // Tạo mảng ảo 20 phần tử để render 20 cái khung xương
-          Array.from({ length: 20 }).map((_, index) => (
-            <div className="col" key={`skeleton-${index}`}>
-              <AnimeCardSkeleton />
-            </div>
-          ))}
+      <Box sx={{ animation: "fade-in 0.5s ease" }}>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:gap-6">
+          {/* CASE 1: ĐANG LOADING -> HIỂN THỊ SKELETON */}
+          {loading &&
+            Array.from({ length: 20 }).map((_, index) => (
+              <div key={`skeleton-${index}`}>
+                <AnimeCardSkeleton />
+              </div>
+            ))}
 
-        {/* CASE 2: CÓ DATA -> HIỂN THỊ CARD THẬT */}
-        {!loading &&
-          animes.length > 0 &&
-          animes.map((anime, index) => (
-            <div className="col" key={anime.id || index}>
-              <AnimeCard item={anime} />
-            </div>
-          ))}
-      </div>
+          {/* CASE 2: CÓ DATA -> HIỂN THỊ CARD THẬT */}
+          {!loading &&
+            animes.length > 0 &&
+            animes.map((anime, index) => (
+              <div key={anime.id || index}>
+                <AnimeCard item={anime} />
+              </div>
+            ))}
+        </div>
+      </Box>
 
       {/* CASE 3: CHƯA CÓ GÌ (INITIAL STATE) */}
       {!loading && animes.length === 0 && (
-        <div className="py-5 text-center">
-          <div
-            className="px-5 py-4 border shadow-sm alert alert-light d-inline-block"
-            role="alert"
+        <Box py={8} display="flex" justifyContent="center">
+          <Alert
+            severity="info"
+            icon={<Box fontSize={30}>👇</Box>}
+            sx={{
+              px: { xs: 3, md: 6 },
+              py: 3,
+              alignItems: "center",
+              borderRadius: 3,
+              boxShadow: 1
+            }}
           >
-            <div className="mb-2 fs-1">👇</div>
-            <strong>Bấm nút phía trên để quay 20 bộ ngẫu nhiên!</strong>
-          </div>
-        </div>
+            <Typography variant="h6" fontWeight="bold">
+              Bấm nút phía trên để quay 20 bộ ngẫu nhiên!
+            </Typography>
+          </Alert>
+        </Box>
       )}
-    </div>
+    </Container>
   );
 }

@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { ModeProvider } from "@/context/ModeContext";
+import MuiProvider from "@/components/MuiProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +27,9 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SpeedInsights />
-        <ModeProvider>{children}</ModeProvider>
+        <MuiProvider>
+          <ModeProvider>{children}</ModeProvider>
+        </MuiProvider>
       </body>
     </html>
   );

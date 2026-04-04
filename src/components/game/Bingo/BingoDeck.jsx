@@ -1,5 +1,7 @@
 "use client";
 
+import { Box, Paper, Typography, Button, Stack } from "@mui/material";
+
 export default function BingoDeck({
   currentCard,
   gameStatus,
@@ -11,76 +13,125 @@ export default function BingoDeck({
   onRestart,
 }) {
   return (
-    <div
-      className="flex flex-col items-center sticky-md-top"
-      style={{ top: "80px" }}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        position: { md: "sticky" },
+        top: 80,
+      }}
     >
       {gameStatus === "playing" ? (
         // --- TRẠNG THÁI ĐANG CHƠI ---
-        <div className="w-full max-w-md p-6 text-center transition-all bg-white border shadow-lg rounded-2xl">
+        <Paper
+          elevation={3}
+          sx={{
+            width: "100%",
+            maxWidth: 400,
+            p: 4,
+            textAlign: "center",
+            borderRadius: 4,
+          }}
+        >
           {currentCard ? (
-            <>
-              <img
+            <Box mb={3}>
+              <Box
+                component="img"
                 src={currentCard.thumbnail}
-                className="object-cover w-48 h-64 mx-auto mb-4 border shadow-md rounded-xl"
                 alt="cover"
+                sx={{
+                  width: 192,
+                  height: 256,
+                  objectFit: "cover",
+                  mx: "auto",
+                  mb: 2,
+                  borderRadius: 3,
+                  boxShadow: 3,
+                }}
               />
-              <h3 className="mb-4 text-lg font-bold leading-tight wrap-break-words text-slate-800">
+              <Typography variant="h6" fontWeight="bold" color="text.primary" sx={{ wordWrap: "break-word", lineHeight: 1.2 }}>
                 {currentCard.title}
-              </h3>
-            </>
+              </Typography>
+            </Box>
           ) : (
-            <div className="flex items-center justify-center w-48 h-64 mx-auto mb-4 bg-gray-100 rounded-xl">
-              Loading...
-            </div>
+            <Box
+              sx={{
+                width: 192,
+                height: 256,
+                mx: "auto",
+                mb: 4,
+                bgcolor: "grey.100",
+                borderRadius: 3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Typography color="text.secondary">Loading...</Typography>
+            </Box>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <button
+          <Stack direction="row" spacing={2} justifyContent="center" width="100%">
+            <Button
+              variant="outlined"
+              color="inherit"
               onClick={onNext}
-              className="py-2 border btn btn-light rounded-pill fw-bold text-muted"
+              fullWidth
+              sx={{ py: 1.5, fontWeight: "bold", borderRadius: "30px", textTransform: "none", color: "text.secondary" }}
             >
               Bỏ qua (Skip)
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="contained"
+              color="warning"
               onClick={onHint}
               disabled={hintsLeft <= 0}
-              className={`btn rounded-pill fw-bold py-2 ${
-                hintsLeft > 0 ? "btn-warning shadow" : "btn-light text-muted"
-              }`}
+              fullWidth
+              sx={{ py: 1.5, fontWeight: "bold", borderRadius: "30px", textTransform: "none" }}
             >
               💡 Gợi ý ({hintsLeft})
-            </button>
-          </div>
-        </div>
+            </Button>
+          </Stack>
+        </Paper>
       ) : (
         // --- TRẠNG THÁI KẾT THÚC (THẮNG/THUA) ---
-        <div className="w-full max-w-md p-8 text-center bg-white border shadow-lg rounded-2xl animate-in zoom-in">
-          <div
-            className={`display-1 mb-4 ${
-              gameStatus === "won" ? "text-success" : "text-danger"
-            }`}
-          >
+        <Paper
+          elevation={4}
+          sx={{
+            width: "100%",
+            maxWidth: 400,
+            p: 5,
+            textAlign: "center",
+            borderRadius: 4,
+            animation: "zoom-in 0.3s ease",
+          }}
+        >
+          <Typography fontSize="5rem" mb={2}>
             {gameStatus === "won" ? "🏆" : "💀"}
-          </div>
-          <h2
-            className={`font-bold text-3xl mb-2 ${
-              gameStatus === "won" ? "text-success" : "text-danger"
-            }`}
+          </Typography>
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            color={gameStatus === "won" ? "success.main" : "error.main"}
+            mb={1}
           >
             {gameStatus === "won" ? "BINGO MASTER!" : "GAME OVER"}
-          </h2>
-          <p className="mb-6 text-muted">
+          </Typography>
+          <Typography variant="body1" color="text.secondary" mb={4}>
             Bạn đã đạt {bingoCount}/{targetGoal} đường Bingo.
-          </p>
-          <button
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
             onClick={onRestart}
-            className="px-5 shadow-lg btn btn-primary btn-lg rounded-pill"
+            size="large"
+            sx={{ px: 5, py: 1.5, borderRadius: "30px", fontWeight: "bold" }}
           >
             Chơi lại
-          </button>
-        </div>
+          </Button>
+        </Paper>
       )}
-    </div>
+    </Box>
   );
 }

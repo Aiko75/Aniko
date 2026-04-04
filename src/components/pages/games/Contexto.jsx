@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import GuessLog from "@/components/game/Contexto/GuessLog";
-import GameSearch from "@/components/game/Contexto/GameSearch";
-import AnimeCard from "@/components/list/AnimeCard";
+import GameSearch from "@/components/ui/GameSearch";
+import AnimeCard from "@/components/ui/AnimeCard";
 import { LOCAL_STORAGE_KEYS } from "@/constants/localKey";
 import { api } from "@/lib/api/baseJsonApi";
 
