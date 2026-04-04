@@ -10,8 +10,12 @@ import Cookies from "js-cookie";
 import { useGetFilters } from "@/hooks/useGetFilters";
 import AnimeCardSkeleton from "@/components/ui/AnimeCardSkeleton";
 import { api } from "@/lib/api/baseJsonApi";
+import { Box, Container, Typography, Stack, Button, TextField, InputAdornment, Grid } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SearchIcon from "@mui/icons-material/Search";
+import CasinoIcon from "@mui/icons-material/Casino";
 
-export default function List() {
+export default function AnimeList() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -152,57 +156,86 @@ export default function List() {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div
-      className={`flex justify-center w-full min-h-screen py-10 transition-colors duration-500 ${
-        currentMode === "hanime" ? "bg-zinc-50" : "bg-blue-50"
-      }`}
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "100vh",
+        py: 6,
+        bgcolor: currentMode === "hanime" ? "grey.50" : "primary.50",
+        transition: "background-color 0.5s ease",
+      }}
     >
-      <main className="w-full max-w-6xl px-4 sm:px-10">
+      <Container maxWidth="lg">
         {/* HEADER SECTION */}
-        <div className="flex flex-col items-start justify-between gap-4 mb-6 md:flex-row md:items-center">
-          <div>
-            <Link
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", md: "center" }}
+          spacing={2}
+          mb={4}
+        >
+          <Box>
+            <Button
+              component={Link}
               href="/"
-              className="px-3 mb-2 btn btn-outline-secondary rounded-pill fw-bold btn-sm d-inline-block"
+              variant="outlined"
+              color="inherit"
+              size="small"
+              startIcon={<ArrowBackIcon />}
+              sx={{ borderRadius: "20px", mb: 2, textTransform: "none", fontWeight: "bold", color: "text.secondary", borderColor: "divider" }}
             >
-              <i className="bi bi-arrow-left"></i> Back
-            </Link>
-            <h1
-              className={`mb-1 text-3xl font-semibold ${
-                currentMode === "hanime" ? "text-pink-600" : "text-blue-700"
-              }`}
+              Back
+            </Button>
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              color={currentMode === "hanime" ? "error.main" : "primary.main"}
+              mb={1}
             >
               {currentMode === "hanime" ? "Thư viện HAnime" : "Thư viện Anime"}
-            </h1>
-            <p className="text-zinc-500">
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
               Tổng cộng: <b>{totalItems}</b> bộ
-            </p>
-          </div>
-          <Link
+            </Typography>
+          </Box>
+          <Button
+            component={Link}
             href="/list/random"
-            className="gap-2 shadow btn btn-primary btn-lg d-flex align-items-center fw-bold rounded-pill"
+            variant="contained"
+            color="primary"
+            size="large"
+            startIcon={<CasinoIcon />}
+            sx={{ borderRadius: "30px", fontWeight: "bold", textTransform: "none", boxShadow: 3, px: 4 }}
           >
             Gacha Time :D
-          </Link>
-        </div>
+          </Button>
+        </Stack>
 
         {/* SEARCH INPUT */}
-        <div className="mb-6">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-              <i className="bi bi-search text-zinc-400"></i>
-            </div>
-            <input
-              type="text"
-              className="w-full py-3 pl-12 pr-4 transition-all bg-white border shadow-sm outline-none border-zinc-200 rounded-2xl focus:ring-2 focus:ring-primary"
-              placeholder={`Tìm kiếm trong ${
-                currentMode === "hanime" ? "H-Anime" : "Anime"
-              }...`}
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-            />
-          </div>
-        </div>
+        <Box mb={4}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder={`Tìm kiếm trong ${currentMode === "hanime" ? "H-Anime" : "Anime"}...`}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+              sx: {
+                bgcolor: "background.paper",
+                borderRadius: "20px",
+                boxShadow: 1,
+                fieldset: { border: "none" },
+                "&:hover fieldset": { border: "none" },
+                "&.Mui-focused fieldset": { border: "2px solid", borderColor: "primary.main" },
+              }
+            }}
+          />
+        </Box>
 
         {/* FILTER BAR */}
         <FilterBar
@@ -219,13 +252,14 @@ export default function List() {
 
         {/* CONTENT GRID */}
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <Grid container spacing={3}>
             {Array.from({ length: itemsPerPage }).map((_, index) => (
-              <AnimeCardSkeleton key={index} />
+              <Grid item xs={6} sm={4} md={3} lg={2.4} key={index}>
+                <AnimeCardSkeleton />
+              </Grid>
             ))}
-          </div>
+          </Grid>
         ) : (
-          /* [UPDATE] Truyền props Pagination vào AnimeGrid */
           <AnimeGrid
             data={activeData}
             isLoading={isLoading}
@@ -234,7 +268,7 @@ export default function List() {
             onPageChange={(page) => updateQuery({ page: page.toString() })}
           />
         )}
-      </main>
-    </div>
+      </Container>
+    </Box>
   );
 }

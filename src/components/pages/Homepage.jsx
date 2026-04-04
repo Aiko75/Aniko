@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Cookies from "js-cookie";
 import { useMode } from "@/context/ModeContext";
+import { Box, Container, Typography, Grid, Card, CardContent, Button } from "@mui/material";
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 
 const KONAMI_CODE = [
   "ArrowUp",
@@ -24,38 +27,31 @@ export default function Homepage() {
   const { mode, setMode } = useMode();
   const [hoveredCard, setHoveredCard] = useState(null);
 
-  // State cho Konami Code
   const [konamiIndex, setKonamiIndex] = useState(0);
-
-  // State cho Triple Tap (Mobile)
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef(null);
 
-  // --- HÀM XỬ LÝ CHUYỂN ĐỔI CHẾ ĐỘ (CORE LOGIC) ---
   const switchToHanime = () => {
-    Cookies.set("app_mode", "hanime", { expires: 365 }); // Lưu Cookie 1 năm
-    setMode("hanime"); // Cập nhật State Context
-    router.refresh(); // Refresh để Server Component cập nhật theo Cookie mới
+    Cookies.set("app_mode", "hanime", { expires: 365 });
+    setMode("hanime");
+    router.refresh();
     alert("🔓 SECRET UNLOCKED: Welcome to the dark side!");
   };
 
   const switchToAnime = () => {
-    Cookies.set("app_mode", "anime", { expires: 365 }); // Lưu Cookie 1 năm
-    setMode("anime"); // Cập nhật State Context
+    Cookies.set("app_mode", "anime", { expires: 365 });
+    setMode("anime");
     router.refresh();
     alert("🛡️ PANIC MODE: Đã quay về giao diện an toàn!");
   };
 
-  // --- 1. LOGIC KONAMI CODE & ESCAPE KEY (DESKTOP) ---
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Thoát chế độ Hanime bằng phím Esc
       if (e.key === "Escape" && mode === "hanime") {
         switchToAnime();
         return;
       }
 
-      // Kích hoạt chế độ Hanime bằng Konami Code
       if (mode === "anime") {
         const requiredKey = KONAMI_CODE[konamiIndex];
         if (e.key.toLowerCase() === requiredKey.toLowerCase()) {
@@ -67,7 +63,6 @@ export default function Homepage() {
             setKonamiIndex(nextIndex);
           }
         } else {
-          // Reset nếu gõ sai (Trừ khi gõ lại từ đầu bằng ArrowUp)
           setKonamiIndex(e.key === "ArrowUp" ? 1 : 0);
         }
       }
@@ -75,30 +70,25 @@ export default function Homepage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [konamiIndex, mode, setMode]); // Dependency array đầy đủ
+  }, [konamiIndex, mode, setMode]);
 
-  // --- 2. LOGIC TRIPLE TAP (MOBILE/DESKTOP CLICK) ---
   const handleTitleClick = () => {
     clickCountRef.current += 1;
-
-    // Reset bộ đếm sau 1 giây nếu không bấm tiếp
     if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
     clickTimerRef.current = setTimeout(() => {
       clickCountRef.current = 0;
     }, 1000);
 
-    // Nếu bấm đủ 3 lần
     if (clickCountRef.current === 3) {
       if (mode === "anime") {
         switchToHanime();
       } else {
         switchToAnime();
       }
-      clickCountRef.current = 0; // Reset ngay sau khi kích hoạt
+      clickCountRef.current = 0;
     }
   };
 
-  // --- UI THEME ---
   const isHanime = mode === "hanime";
   const theme = {
     background: isHanime
@@ -111,172 +101,203 @@ export default function Homepage() {
     cardHoverBorder: isHanime
       ? "rgba(236, 72, 153, 0.8)"
       : "rgba(59, 130, 246, 0.8)",
-    buttonClass: isHanime ? "btn-danger" : "btn-primary",
   };
 
   return (
-    <div
-      className="transition-all duration-700 min-vh-100 w-100 d-flex flex-column justify-content-center align-items-center"
-      style={{
+    <Box
+      sx={{
+        transition: "all 0.7s ease",
+        minHeight: "100vh",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
         background: theme.background,
         color: "white",
+        py: 6
       }}
     >
       {/* Header Section */}
-      <div className="mb-5 text-center animate-in fade-in">
-        {/* LOGIC HINT: Tooltip ẩn và hiệu ứng cursor pointer */}
-        <div className="relative group d-inline-block">
-          <h1
+      <Box textAlign="center" mb={6} sx={{ animation: "fade-in 0.8s ease" }}>
+        <Box position="relative" display="inline-block">
+          <Typography
+            variant="h2"
+            fontWeight="bold"
             onClick={handleTitleClick}
-            className="mb-3 cursor-pointer display-3 fw-bold user-select-none"
-            style={{
+            sx={{
+              mb: 2,
+              cursor: "pointer",
+              userSelect: "none",
               textShadow: `0 0 20px ${theme.accentGlow}`,
               transition: "transform 0.1s",
+              "&:active": {
+                transform: "scale(0.95)"
+              }
             }}
-            title={
-              isHanime ? "Click 3 lần để thoát" : "Hmm... có gì đó bí ẩn ở đây?"
-            }
-            onMouseDown={(e) =>
-              (e.currentTarget.style.transform = "scale(0.95)")
-            }
-            onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            title={isHanime ? "Click 3 lần để thoát" : "Hmm... có gì đó bí ẩn ở đây?"}
           >
-            <span className="text-white">Aniko!</span>
-          </h1>
+            Aniko!
+          </Typography>
 
-          {/* Hint nâng cao: Dấu chấm nhỏ nhấp nháy */}
           {!isHanime && (
-            <span
-              className="absolute top-0 w-2 h-2 bg-white rounded-full opacity-50 -right-4 animate-ping"
-              style={{ animationDuration: "3s" }}
-            ></span>
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                right: -16,
+                width: 8,
+                height: 8,
+                bgcolor: "white",
+                borderRadius: "50%",
+                opacity: 0.5,
+                animation: "ping 3s cubic-bezier(0, 0, 0.2, 1) infinite",
+                "@keyframes ping": {
+                  "75%, 100%": {
+                    transform: "scale(2.5)",
+                    opacity: 0
+                  }
+                }
+              }}
+            />
           )}
-        </div>
+        </Box>
 
-        <p className="lead text-white-50">
-          Cổng thông tin giải trí & Thư viện {isHanime ? "HAnime" : "Anime"} tối
-          thượng
-        </p>
-        <p className="opacity-75 small text-white-50">
+        <Typography variant="h6" sx={{ color: "rgba(255,255,255,0.7)", mb: 1 }}>
+          Cổng thông tin giải trí & Thư viện {isHanime ? "HAnime" : "Anime"} tối thượng
+        </Typography>
+        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)" }}>
           Dữ liệu cập nhật: 09/12/2025
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Navigation Cards */}
-      <main className="container">
-        <div className="row justify-content-center g-4">
+      <Container maxWidth="md">
+        <Grid container spacing={4} justifyContent="center">
           {/* Card 1: Library */}
-          <div className="col-md-5 col-lg-4">
-            <div
+          <Grid item xs={12} sm={6}>
+            <Card
               onClick={() => router.push("/list")}
               onMouseEnter={() => setHoveredCard("library")}
               onMouseLeave={() => setHoveredCard(null)}
-              className="border-0 shadow-lg cursor-pointer card h-100"
-              style={{
+              elevation={0}
+              sx={{
+                height: "100%",
                 background: "rgba(255, 255, 255, 0.05)",
                 backdropFilter: "blur(12px)",
-                borderRadius: "24px",
+                borderRadius: 4,
+                cursor: "pointer",
                 transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-                transform:
-                  hoveredCard === "library" ? "translateY(-12px)" : "none",
+                transform: hoveredCard === "library" ? "translateY(-12px)" : "none",
                 border: `1px solid ${
-                  hoveredCard === "library"
-                    ? theme.cardHoverBorder
-                    : "rgba(255,255,255,0.1)"
+                  hoveredCard === "library" ? theme.cardHoverBorder : "rgba(255,255,255,0.1)"
                 }`,
-                boxShadow:
-                  hoveredCard === "library"
-                    ? `0 10px 30px ${theme.accentGlow}`
-                    : "none",
+                boxShadow: hoveredCard === "library" ? `0 10px 30px ${theme.accentGlow}` : "none",
+                color: "white"
               }}
             >
-              <div className="p-5 text-center card-body d-flex flex-column align-items-center">
-                <div
-                  className="mb-4 d-flex justify-content-center align-items-center rounded-circle"
-                  style={{
-                    width: "80px",
-                    height: "80px",
+              <CardContent sx={{ p: 5, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }}>
+                <Box
+                  sx={{
+                    mb: 4,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderRadius: "50%",
+                    width: 80,
+                    height: 80,
                     backgroundColor: theme.accent,
                     boxShadow: `0 0 20px ${theme.accentGlow}`,
                     opacity: 0.9,
                   }}
                 >
-                  <span style={{ fontSize: "40px" }}>📚</span>
-                </div>
-                <h3 className="mb-2 text-white card-title fw-bold">
+                  <LibraryBooksIcon sx={{ fontSize: 40 }} />
+                </Box>
+                <Typography variant="h5" fontWeight="bold" mb={2}>
                   {isHanime ? "Thư viện HAnime" : "Thư viện Anime"}
-                </h3>
-                <p className="mb-4 card-text text-white-50">
-                  Tra cứu, lọc và tìm kiếm hàng ngàn bộ{" "}
-                  {isHanime ? "haiten" : "anime"} với dữ liệu chi tiết từ
-                  Database.
-                </p>
-                <button
-                  className={`px-4 mt-auto btn ${theme.buttonClass} rounded-pill fw-bold w-100 shadow-sm`}
+                </Typography>
+                <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", mb: 4, flexGrow: 1 }}>
+                  Tra cứu, lọc và tìm kiếm hàng ngàn bộ {isHanime ? "haiten" : "anime"} với dữ liệu chi tiết từ Database.
+                </Typography>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  sx={{
+                    borderRadius: "20px",
+                    fontWeight: "bold",
+                    bgcolor: isHanime ? "error.main" : "primary.main",
+                    "&:hover": {
+                      bgcolor: isHanime ? "error.dark" : "primary.dark",
+                    }
+                  }}
                 >
                   Truy cập ngay &rarr;
-                </button>
-              </div>
-            </div>
-          </div>
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
 
           {/* Card 2: Mini Games */}
-          <div className="col-md-5 col-lg-4">
-            <div
+          <Grid item xs={12} sm={6}>
+            <Card
               onClick={() => router.push("/game")}
               onMouseEnter={() => setHoveredCard("game")}
               onMouseLeave={() => setHoveredCard(null)}
-              className="border-0 shadow-lg cursor-pointer card h-100"
-              style={{
+              elevation={0}
+              sx={{
+                height: "100%",
                 background: "rgba(255, 255, 255, 0.05)",
                 backdropFilter: "blur(12px)",
-                borderRadius: "24px",
+                borderRadius: 4,
+                cursor: "pointer",
                 transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-                transform:
-                  hoveredCard === "game" ? "translateY(-12px)" : "none",
+                transform: hoveredCard === "game" ? "translateY(-12px)" : "none",
                 border: `1px solid ${
-                  hoveredCard === "game"
-                    ? "rgba(25, 135, 84, 0.8)"
-                    : "rgba(255,255,255,0.1)"
+                  hoveredCard === "game" ? "rgba(25, 135, 84, 0.8)" : "rgba(255,255,255,0.1)"
                 }`,
-                boxShadow:
-                  hoveredCard === "game"
-                    ? "0 10px 30px rgba(25, 135, 84, 0.4)"
-                    : "none",
+                boxShadow: hoveredCard === "game" ? "0 10px 30px rgba(25, 135, 84, 0.4)" : "none",
+                color: "white"
               }}
             >
-              <div className="p-5 text-center card-body d-flex flex-column align-items-center">
-                <div
-                  className="mb-4 d-flex justify-content-center align-items-center bg-success rounded-circle"
-                  style={{
-                    width: "80px",
-                    height: "80px",
+              <CardContent sx={{ p: 5, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }}>
+                <Box
+                  sx={{
+                    mb: 4,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderRadius: "50%",
+                    width: 80,
+                    height: 80,
+                    bgcolor: "success.main",
                     boxShadow: "0 0 20px rgba(25, 135, 84, 0.5)",
                   }}
                 >
-                  <span style={{ fontSize: "40px", marginBottom: "10px" }}>
-                    🎮
-                  </span>
-                </div>
-                <h3 className="mb-2 text-white card-title fw-bold">
+                  <SportsEsportsIcon sx={{ fontSize: 40 }} />
+                </Box>
+                <Typography variant="h5" fontWeight="bold" mb={2}>
                   Mini Games
-                </h3>
-                <p className="mb-4 card-text text-white-50">
-                  Thử thách kiến thức của bạn với Wordle, Bingo và các trò chơi
-                  giải trí khác.
-                </p>
-                <button className="px-4 mt-auto shadow-sm btn btn-success rounded-pill fw-bold w-100">
+                </Typography>
+                <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", mb: 4, flexGrow: 1 }}>
+                  Thử thách kiến thức của bạn với Wordle, Bingo và các trò chơi giải trí khác.
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="success"
+                  fullWidth
+                  sx={{ borderRadius: "20px", fontWeight: "bold" }}
+                >
                   Chơi ngay &rarr;
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Container>
 
-      <footer className="mt-5 opacity-50 text-white-50 small">
+      <Typography variant="caption" sx={{ mt: 8, opacity: 0.5, color: "rgba(255,255,255,0.7)" }}>
         © 2026 Aniko Project. IT Engineer Edition.
-      </footer>
-    </div>
+      </Typography>
+    </Box>
   );
 }

@@ -6,7 +6,22 @@ import { LOCAL_STORAGE_KEYS } from "@/constants/localKey";
 import Cookies from "js-cookie";
 import ResultRow from "@/components/game/Wordle/ResultRow";
 import { api } from "@/lib/api/baseJsonApi";
-import GameSearch from "@/components/game/Contexto/GameSearch";
+import GameSearch from "@/components/ui/GameSearch";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  AppBar,
+  Toolbar,
+  Chip,
+  Paper,
+  CircularProgress,
+  Stack,
+  IconButton
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ReplayIcon from "@mui/icons-material/Replay";
 
 export default function Wordle() {
   // --- STATE ---
@@ -132,128 +147,144 @@ export default function Wordle() {
   };
 
   // --- UI CONFIG ---
-  const themeText =
-    currentMode === "hanime" ? "text-pink-600" : "text-blue-600";
-  const themeBg =
-    currentMode === "hanime"
-      ? "bg-pink-600 hover:bg-pink-700"
-      : "bg-blue-600 hover:bg-blue-700";
-  const themeBorder =
-    currentMode === "hanime" ? "border-pink-500" : "border-blue-500";
-
+  const themeColor = currentMode === "hanime" ? "secondary" : "primary";
+  const themeBgColor = currentMode === "hanime" ? "#fdf2f8" : "#f8fafc";
+  
   // --- LOADING UI KHI KHỞI TẠO ---
   if (!targetAnime && loading)
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50 text-slate-400">
-        <div className="flex flex-col items-center gap-2">
-          <div
-            className={`w-8 h-8 border-4 ${themeBorder} rounded-full border-t-transparent animate-spin`}
-          ></div>
-          <p className="font-medium">Đang khởi tạo màn chơi...</p>
-        </div>
-      </div>
+      <Box display="flex" alignItems="center" justifyContent="center" minHeight="100vh" bgcolor={themeBgColor}>
+        <Stack alignItems="center" spacing={2}>
+          <CircularProgress color={themeColor} />
+          <Typography fontWeight={500} color="text.secondary">
+            Đang khởi tạo màn chơi...
+          </Typography>
+        </Stack>
+      </Box>
     );
 
   return (
-    <div
-      className={`w-full min-h-screen pb-20 transition-colors duration-500 ${
-        currentMode === "hanime" ? "bg-zinc-50" : "bg-slate-50"
-      }`}
-    >
-      {/* HEADER GIỮ NGUYÊN */}
-      <div className="sticky top-0 z-40 bg-white border-b shadow-sm border-slate-100">
-        <div className="flex items-center justify-between h-16 px-4 mx-auto max-w-7xl">
-          <div className="flex items-center gap-3 md:gap-4">
-            <Link
+    <Box sx={{ minHeight: "100vh", pb: 10, bgcolor: themeBgColor, transition: "background-color 0.5s ease" }}>
+      {/* HEADER */}
+      <AppBar position="sticky" color="inherit" elevation={1} sx={{ zIndex: 40 }}>
+        <Toolbar sx={{ justifyContent: "space-between", maxWidth: 1200, width: "100%", mx: "auto" }}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Button
+              component={Link}
               href="/game"
-              className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors font-bold text-sm border border-slate-200 hover:border-blue-200 bg-slate-50 hover:bg-white rounded-full px-4 py-1.5"
+              variant="outlined"
+              color="inherit"
+              startIcon={<ArrowBackIcon />}
+              sx={{ borderRadius: "20px", textTransform: "none", display: { xs: "none", sm: "flex" } }}
             >
-              <i className="bi bi-arrow-left"></i> Back
-            </Link>
-            <span
-              className={`mb-0 navbar-brand h1 fw-bold ${themeText} d-none d-sm-block`}
+              Back
+            </Button>
+            <IconButton
+              component={Link}
+              href="/game"
+              color="inherit"
+              sx={{ display: { xs: "flex", sm: "none" } }}
             >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h6" fontWeight={800} color={`${themeColor}.main`} sx={{ display: { xs: "none", sm: "block" } }}>
               {currentMode === "hanime" ? "H-Anidle 🔞" : "Anidle 🎬"}
-            </span>
-          </div>
+            </Typography>
+          </Stack>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full font-bold text-sm border border-slate-200">
-              <span className="hidden mr-1 xs:inline">Guesses:</span>
-              <span className={themeText}>{guesses.length}</span>
-            </div>
-            <button
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Chip
+              label={
+                <Typography variant="body2" fontWeight="bold">
+                  <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, mr: 1 }}>
+                    Guesses:
+                  </Box>
+                  <Box component="span" color={`${themeColor}.main`}>{guesses.length}</Box>
+                </Typography>
+              }
+              variant="outlined"
+              sx={{ bgcolor: "background.paper" }}
+            />
+            <Button
+              variant="contained"
+              color={themeColor}
               onClick={handleNewGame}
-              className={`${themeBg} text-white text-sm font-bold py-1.5 px-4 !rounded-full shadow-sm transition-all hover:shadow-md active:scale-95`}
+              sx={{ borderRadius: "20px", fontWeight: "bold", textTransform: "none" }}
             >
               Ván mới
-            </button>
-          </div>
-        </div>
-      </div>
+            </Button>
+          </Stack>
+        </Toolbar>
+      </AppBar>
 
       {/* MAIN CONTENT */}
-      <div className="flex flex-col items-center max-w-6xl px-4 mx-auto mt-8">
-        <div className="mb-8 text-center">
-          <h2 className="mb-2 text-3xl font-bold text-slate-800">
-            {currentMode === "hanime"
-              ? "Đoán bộ H-Anime bí ẩn"
-              : "Đoán bộ Anime bí ẩn"}
-          </h2>
-          <p className="text-slate-500">
+      <Container maxWidth="md" sx={{ mt: 8, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <Box textAlign="center" mb={6}>
+          <Typography variant="h3" fontWeight={800} color="text.primary" gutterBottom>
+            {currentMode === "hanime" ? "Đoán bộ H-Anime bí ẩn" : "Đoán bộ Anime bí ẩn"}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
             Nhập tên bất kỳ để tìm ra manh mối...
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
         {!isWon ? (
-          // [UPDATE] Thay thế Input cũ bằng GameSearch
-          <div className="relative z-30 w-full max-w-xl mb-12">
+          <Box position="relative" zIndex={30} width="100%" maxWidth="sm" mb={6}>
             <GameSearch onGuess={handleSelectAnime} disabled={loading} />
-          </div>
+          </Box>
         ) : (
-          /* WIN SCREEN (Giữ nguyên) */
-          <div className="w-full max-w-xl mb-10 duration-500 animate-in zoom-in">
-            <div className="p-1 shadow-lg bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-green-200">
-              <div className="p-6 text-center bg-white rounded-xl">
-                <h3 className="mb-2 text-2xl font-bold text-green-700">
+          <Box width="100%" maxWidth="sm" mb={5} sx={{ animation: "zoom-in 0.5s ease" }}>
+            <Paper
+              elevation={4}
+              sx={{
+                p: 0.5,
+                borderRadius: "24px",
+                background: "linear-gradient(to bottom right, #22c55e, #059669)",
+              }}
+            >
+              <Box bgcolor="white" p={4} borderRadius="20px" textAlign="center">
+                <Typography variant="h4" fontWeight={800} color="success.main" gutterBottom>
                   CHÍNH XÁC!
-                </h3>
-                <p className="mb-6 text-slate-600">
-                  Đáp án là:{" "}
-                  <span className="font-bold text-slate-900">
-                    {targetAnime.title}
-                  </span>
-                </p>
-                <div className="flex justify-center mb-6">
-                  <img
+                </Typography>
+                <Typography color="text.secondary" mb={3}>
+                  Đáp án là: <Box component="span" fontWeight={800} color="text.primary">{targetAnime.title}</Box>
+                </Typography>
+                <Box display="flex" justifyContent="center" mb={4}>
+                  <Box
+                    component="img"
                     src={targetAnime.thumbnail}
-                    className="w-32 rounded-lg shadow-md"
+                    sx={{ width: 128, borderRadius: 2, boxShadow: 3 }}
                   />
-                </div>
-                <button
+                </Box>
+                <Button
+                  variant="contained"
+                  color="success"
                   onClick={handleNewGame}
-                  className="px-8 py-3 font-bold text-white transition-all bg-green-600 rounded-full shadow-lg hover:bg-green-700 hover:scale-105"
+                  startIcon={<ReplayIcon />}
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: "30px",
+                    fontWeight: 800,
+                    fontSize: "1.1rem",
+                  }}
                 >
-                  Chơi lại 🔄
-                </button>
-              </div>
-            </div>
-          </div>
+                  Chơi lại
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
         )}
 
-        {/* LIST GUESSES (Giữ nguyên) */}
-        <div className="w-full space-y-3">
+        {/* LIST GUESSES */}
+        <Stack spacing={1.5} width="100%">
           {guesses.map((guess, index) => (
-            <div
-              key={`${guess.id}-${index}`}
-              className="duration-500 animate-in slide-in-from-bottom-4 fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
+            <Box key={`${guess.id}-${index}`}>
               <ResultRow guess={guess} target={targetAnime} />
-            </div>
+            </Box>
           ))}
-        </div>
-      </div>
-    </div>
+        </Stack>
+      </Container>
+    </Box>
   );
 }

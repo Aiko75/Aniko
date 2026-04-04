@@ -13,7 +13,7 @@ const config = {
       // Bạn có thể định nghĩa màu sắc thương hiệu ở đây nếu muốn
     },
   },
-  plugins: [],
+  plugins: [require("tailwind-scrollbar")],
 };
 
 export default config;

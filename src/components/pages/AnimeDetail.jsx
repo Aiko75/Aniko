@@ -1,14 +1,35 @@
-// src/app/list/[id]/page.jsx
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation"; // Hook lấy param từ URL
+import { useParams } from "next/navigation";
 import { api } from "@/lib/api/baseJsonApi";
 import AnimeDetailSkeleton from "@/components/ui/AnimeDetailSkeleton";
+import {
+  Box,
+  Container,
+  Grid,
+  Typography,
+  Button,
+  Chip,
+  Stack,
+  Card,
+  CardMedia,
+  Paper,
+  Table,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import FingerprintIcon from "@mui/icons-material/Fingerprint";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 export default function Detail() {
-  const params = useParams(); // Lấy ID từ URL (/list/123 -> slugId = 123)
+  const params = useParams();
   const slugId = params?.slugId;
 
   const [anime, setAnime] = useState(null);
@@ -43,141 +64,185 @@ export default function Detail() {
 
   if (error || !anime) {
     return (
-      <div className="flex-col text-white bg-white min-vh-100 d-flex justify-content-center align-items-center">
-        <h2 className="mb-3 text-danger">⚠️ {error}</h2>
-        <Link href="/" className="btn btn-outline-light">
-          ← Quay lại trang chủ
-        </Link>
-      </div>
+      <Box
+        minHeight="100vh"
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        bgcolor="background.default"
+      >
+        <Typography variant="h4" color="error.main" mb={3} display="flex" alignItems="center" gap={1}>
+          <WarningAmberIcon fontSize="large" /> {error}
+        </Typography>
+        <Button
+          component={Link}
+          href="/"
+          variant="outlined"
+          color="primary"
+          startIcon={<ArrowBackIcon />}
+          sx={{ borderRadius: "20px" }}
+        >
+          Quay lại trang chủ
+        </Button>
+      </Box>
     );
   }
 
   // --- GIAO DIỆN CHÍNH ---
   return (
-    <div className="py-5 text-black bg-zinc-50 min-vh-100">
-      <div className="container">
+    <Box sx={{ py: 6, bgcolor: "grey.50", minHeight: "100vh" }}>
+      <Container maxWidth="lg">
         {/* Breadcrumb / Back Button */}
-        <div className="mb-4">
-          <Link href="/list" className="btn btn-outline-secondary rounded-pill">
-            &larr; Thư viện
-          </Link>
-        </div>
+        <Box mb={4}>
+          <Button
+            component={Link}
+            href="/list"
+            variant="outlined"
+            color="inherit"
+            startIcon={<ArrowBackIcon />}
+            sx={{ borderRadius: "20px", textTransform: "none", color: "text.secondary", borderColor: "divider" }}
+          >
+            Thư viện
+          </Button>
+        </Box>
 
-        <div className="row g-5">
+        <Grid container spacing={6}>
           {/* CỘT TRÁI: ẢNH & NÚT HÀNH ĐỘNG */}
-          <div className="col-md-4 col-lg-3">
-            <div className="overflow-hidden border-0 shadow-lg card rounded-4">
-              <img
-                src={anime.thumbnail}
+          <Grid item xs={12} md={4} lg={3}>
+            <Card elevation={4} sx={{ borderRadius: 4, overflow: "hidden", mb: 3 }}>
+              <CardMedia
+                component="img"
+                image={anime.thumbnail}
                 alt={anime.title}
-                className="card-img-top w-100 object-fit-cover"
-                style={{ height: "auto", minHeight: "400px" }}
+                sx={{
+                  width: "100%",
+                  height: "auto",
+                  minHeight: 400,
+                  objectFit: "cover",
+                }}
               />
-            </div>
+            </Card>
 
-            <div className="gap-2 mt-4 d-grid">
-              <a
+            <Stack spacing={2}>
+              <Button
                 href={anime.url}
                 target="_blank"
                 rel="noreferrer"
-                className="shadow btn btn-primary btn-lg fw-bold rounded-pill"
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={<PlayArrowIcon />}
+                sx={{
+                  borderRadius: "30px",
+                  fontWeight: "bold",
+                  py: 1.5,
+                  boxShadow: 3,
+                }}
               >
                 Xem Phim Ngay
-              </a>
-            </div>
-          </div>
+              </Button>
+            </Stack>
+          </Grid>
 
           {/* CỘT PHẢI: THÔNG TIN CHI TIẾT */}
-          <div className="col-md-8 col-lg-9">
-            <h1 className="mb-3 display-5 fw-bold">{anime.title}</h1>
+          <Grid item xs={12} md={8} lg={9}>
+            <Typography variant="h3" fontWeight="bold" mb={3} color="text.primary">
+              {anime.title}
+            </Typography>
 
             {/* Metadata Badges */}
-            <div className="flex-wrap gap-2 mb-4 d-flex">
+            <Stack direction="row" flexWrap="wrap" gap={1.5} mb={4}>
               {anime.release_year && (
-                <span className="badge bg-secondary fs-6">
-                  📅 {anime.release_year}
-                </span>
+                <Chip
+                  icon={<CalendarTodayIcon fontSize="small" />}
+                  label={anime.release_year}
+                  color="default"
+                  sx={{ fontWeight: "medium" }}
+                />
               )}
-              <span className="badge bg-success fs-6">
-                👁️ {new Intl.NumberFormat().format(anime.views)} Views
-              </span>
-              <span className="badge bg-warning text-dark fs-6">
-                🆔 ID: {anime.id}
-              </span>
-            </div>
+              <Chip
+                icon={<VisibilityIcon fontSize="small" />}
+                label={`${new Intl.NumberFormat().format(anime.views)} Views`}
+                color="success"
+                sx={{ fontWeight: "medium" }}
+              />
+              <Chip
+                icon={<FingerprintIcon fontSize="small" />}
+                label={`ID: ${anime.id}`}
+                color="warning"
+                sx={{ fontWeight: "medium" }}
+              />
+            </Stack>
 
             {/* Synopsis */}
-            <div className="mb-5">
-              <h4 className="pb-2 mb-3 border-bottom border-secondary">
+            <Box mb={6}>
+              <Typography
+                variant="h6"
+                fontWeight="bold"
+                pb={1}
+                mb={2}
+                borderBottom="2px solid"
+                borderColor="divider"
+              >
                 Nội dung
-              </h4>
-              <p
-                className="lead fs-6 text-secondary"
-                style={{ lineHeight: "1.8" }}
+              </Typography>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ lineHeight: 1.8, fontSize: "1.1rem" }}
               >
                 {anime.synopsis || "Chưa có mô tả cho bộ này."}
-              </p>
-            </div>
+              </Typography>
+            </Box>
 
             {/* Thông tin bảng */}
-            <div className="row g-4">
-              <div className="col-12">
-                <h5 className="mb-3 text-sm text-muted text-uppercase fw-bold">
-                  Thông tin khác
-                </h5>
-                <div className="p-4 bg-white shadow-sm rounded-3">
-                  <table className="table mb-0 table-borderless ">
-                    <tbody>
-                      <tr>
-                        <td className="fw-bold text-muted w-25">Studio:</td>
-                        <td>
+            <Box>
+              <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" textTransform="uppercase" mb={2}>
+                Thông tin khác
+              </Typography>
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow sx={{ "& td": { borderBottom: "none", py: 1.5 } }}>
+                      <TableCell sx={{ width: "25%", fontWeight: "bold", color: "text.secondary" }}>Studio:</TableCell>
+                      <TableCell>
+                        <Stack direction="row" flexWrap="wrap" gap={1}>
                           {anime.studios?.map((s, i) => (
-                            <span
-                              key={i}
-                              className="badge bg-info text-dark me-1"
-                            >
-                              {s.name}
-                            </span>
+                            <Chip key={i} label={s.name} size="small" color="info" variant="outlined" />
                           ))}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="fw-bold text-muted">Thể loại:</td>
-                        <td>
-                          <div className="flex-wrap gap-1 d-flex">
-                            {anime.genres?.map((g, i) => (
-                              <span
-                                key={i}
-                                className="border badge bg-light text-dark fw-normal"
-                              >
-                                {g.name}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="fw-bold text-muted">Censorship:</td>
-                        <td className="text-capitalize">
-                          {anime.raw_data.censorship || "Unknown"}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="fw-bold text-muted">Ngày cập nhật:</td>
-                        <td>
-                          {new Date(
-                            anime.updated_at || anime.created_at
-                          ).toLocaleDateString("vi-VN")}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow sx={{ "& td": { borderBottom: "none", py: 1.5 } }}>
+                      <TableCell sx={{ fontWeight: "bold", color: "text.secondary" }}>Thể loại:</TableCell>
+                      <TableCell>
+                        <Stack direction="row" flexWrap="wrap" gap={1}>
+                          {anime.genres?.map((g, i) => (
+                            <Chip key={i} label={g.name} size="small" variant="filled" sx={{ bgcolor: "grey.200" }} />
+                          ))}
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow sx={{ "& td": { borderBottom: "none", py: 1.5 } }}>
+                      <TableCell sx={{ fontWeight: "bold", color: "text.secondary" }}>Censorship:</TableCell>
+                      <TableCell sx={{ textTransform: "capitalize" }}>
+                        {anime.raw_data.censorship || "Unknown"}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow sx={{ "& td": { borderBottom: "none", py: 1.5 } }}>
+                      <TableCell sx={{ fontWeight: "bold", color: "text.secondary" }}>Ngày cập nhật:</TableCell>
+                      <TableCell>
+                        {new Date(anime.updated_at || anime.created_at).toLocaleDateString("vi-VN")}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Paper>
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
   );
 }

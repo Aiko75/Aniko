@@ -2,10 +2,23 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import GameSearch from "@/components/game/Contexto/GameSearch"; // Nhớ check lại đường dẫn import này
+import GameSearch from "@/components/ui/GameSearch";
 import { LOCAL_STORAGE_KEYS } from "@/constants/localKey";
 import { api } from "@/lib/api/baseJsonApi";
 import TicTacToeGrid from "@/components/game/TicTacToe/TicTacToeGrid"; // [UPDATE] Import Component mới
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  AppBar,
+  Toolbar,
+  Chip,
+  Paper,
+  Stack,
+  CircularProgress
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function TicTacToe() {
   const [board, setBoard] = useState(null);
@@ -101,81 +114,104 @@ export default function TicTacToe() {
 
   if (loading)
     return (
-      <div className="min-vh-100 d-flex flex-column justify-content-center align-items-center bg-light">
-        <div className="mb-3 spinner-border text-primary"></div>
-        <h5 className="text-muted fw-bold">Đang thiết lập bàn cờ...</h5>
-      </div>
+      <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="100vh" bgcolor="#f8f9fa">
+        <CircularProgress sx={{ mb: 2 }} />
+        <Typography variant="h6" color="text.secondary" fontWeight="bold">
+          Đang thiết lập bàn cờ...
+        </Typography>
+      </Box>
     );
 
   return (
-    <div className="pb-5 min-vh-100 bg-light">
+    <Box sx={{ minHeight: "100vh", pb: 6, bgcolor: "#f8f9fa" }}>
       {/* Navbar */}
-      <nav className="mb-4 bg-white shadow-sm navbar navbar-light sticky-top">
-        <div className="container">
-          <Link
+      <AppBar position="sticky" color="inherit" elevation={1} sx={{ zIndex: 40 }}>
+        <Toolbar sx={{ justifyContent: "space-between", maxWidth: 1200, width: "100%", mx: "auto" }}>
+          <Button
+            component={Link}
             href="/game"
-            className="px-3 btn btn-sm btn-outline-secondary rounded-pill fw-bold"
+            variant="outlined"
+            color="inherit"
+            startIcon={<ArrowBackIcon />}
+            sx={{ borderRadius: "20px", textTransform: "none", fontWeight: "bold" }}
           >
-            &larr; Back
-          </Link>
-          <div className="gap-3 d-flex align-items-center">
-            <div className="px-3 py-2 border badge bg-danger bg-opacity-10 text-danger border-danger rounded-pill font-monospace">
-              LIVES: {lives}
-            </div>
-            <button
-              className="px-3 shadow-sm btn btn-sm btn-primary rounded-pill fw-bold"
+            Back
+          </Button>
+
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Chip
+              label={`LIVES: ${lives}`}
+              color="error"
+              variant="outlined"
+              sx={{ fontWeight: "bold", fontFamily: "monospace", borderRadius: "16px", px: 1, bgcolor: "error.light", color: "error.dark" }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
               onClick={handleNewGame}
+              sx={{ borderRadius: "20px", fontWeight: "bold", textTransform: "none" }}
             >
               Ván mới
-            </button>
-          </div>
-        </div>
-      </nav>
+            </Button>
+          </Stack>
+        </Toolbar>
+      </AppBar>
 
-      <div style={wrapperStyle}>
+      <Container maxWidth="md" sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center" }}>
         {/* Search Overlay & Input Box */}
-        <div
-          className="mb-4 w-100 sticky-top"
-          style={{ maxWidth: "600px", top: "75px", zIndex: 100 }}
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: 600,
+            position: "sticky",
+            top: 80,
+            zIndex: 30,
+            mb: 4,
+          }}
         >
-          <div className="p-3 mx-2 bg-white border shadow-lg rounded-4">
+          <Paper elevation={4} sx={{ p: 3, mx: 2, borderRadius: 4 }}>
             {selectedCell ? (
-              <div className="mb-2 text-center animate-in fade-in">
-                <small
-                  className="text-muted fw-bold"
-                  style={{ fontSize: "0.65rem" }}
-                >
+              <Box mb={2} textAlign="center" sx={{ animation: "fade-in 0.3s ease" }}>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold" display="block">
                   Mục tiêu:
-                </small>
-                <div className="gap-1 mt-1 d-flex justify-content-center align-items-center">
-                  <span className="badge bg-success truncate-text">
-                    {board.rows[selectedCell.r].value}
-                  </span>
-                  <span className="text-muted">+</span>
-                  <span className="badge bg-primary truncate-text">
-                    {board.cols[selectedCell.c].value}
-                  </span>
-                </div>
-              </div>
+                </Typography>
+                <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" mt={1}>
+                  <Chip
+                    label={board.rows[selectedCell.r].value}
+                    color="success"
+                    size="small"
+                    sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}
+                  />
+                  <Typography variant="body2" color="text.secondary">+</Typography>
+                  <Chip
+                    label={board.cols[selectedCell.c].value}
+                    color="primary"
+                    size="small"
+                    sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}
+                  />
+                </Stack>
+              </Box>
             ) : (
-              <p className="mb-1 text-center text-muted small fst-italic">
+              <Typography variant="body2" color="text.secondary" align="center" fontStyle="italic" mb={1}>
                 Bấm chọn ô trống bên dưới
-              </p>
+              </Typography>
             )}
-            <div style={{ opacity: selectedCell ? 1 : 0.4 }}>
+            <Box sx={{ opacity: selectedCell ? 1 : 0.4, transition: "opacity 0.3s ease" }}>
               <GameSearch onGuess={handleGuess} disabled={!selectedCell} />
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Paper>
+        </Box>
 
-        {/* [UPDATE] Gọi Component Grid đã tách */}
-        <TicTacToeGrid
-          board={board}
-          gridState={gridState}
-          selectedCell={selectedCell}
-          onSelectCell={(r, c) => setSelectedCell({ r, c })}
-        />
-      </div>
-    </div>
+        {/* Gọi Component Grid đã tách */}
+        <Box width="100%" display="flex" justifyContent="center">
+          <TicTacToeGrid
+            board={board}
+            gridState={gridState}
+            selectedCell={selectedCell}
+            onSelectCell={(r, c) => setSelectedCell({ r, c })}
+          />
+        </Box>
+      </Container>
+    </Box>
   );
 }

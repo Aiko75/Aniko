@@ -1,5 +1,6 @@
 "use client";
-import AnimeCard from "./AnimeCard";
+import AnimeCard from "@/components/ui/AnimeCard";
+import { Box, Grid, Pagination, Typography, Paper } from "@mui/material";
 
 export default function AnimeGrid({
   data,
@@ -11,56 +12,50 @@ export default function AnimeGrid({
   // --- UI KHI KHÔNG CÓ DỮ LIỆU ---
   if (!isLoading && data.length === 0) {
     return (
-      <div className="py-20 text-center border-2 border-dashed text-zinc-500 border-zinc-200 dark:border-zinc-800 rounded-xl">
-        Không tìm thấy bộ nào phù hợp với bộ lọc hiện tại.
-      </div>
+      <Paper
+        elevation={0}
+        sx={{
+          py: 10,
+          textAlign: "center",
+          border: "2px dashed",
+          borderColor: "divider",
+          borderRadius: 3,
+          bgcolor: "background.default",
+        }}
+      >
+        <Typography color="text.secondary">
+          Không tìm thấy bộ nào phù hợp với bộ lọc hiện tại.
+        </Typography>
+      </Paper>
     );
   }
 
   return (
-    <div className="w-full">
-      {/* --- GRID LIST --- */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+    <Box width="100%">
+      {/* --- GRID LIST BẰNG TAILWIND --- */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:gap-6">
         {data.map((item, index) => (
-          <AnimeCard key={item.id || index} item={item} />
+          <div key={item.id || index}>
+            <AnimeCard item={item} />
+          </div>
         ))}
       </div>
 
-      {/* --- PAGINATION (SIMPLE STYLE) --- */}
+      {/* --- PAGINATION (MUI STYLE) --- */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-10 mb-20">
-          {/* Nút Previous */}
-          <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className={`px-4 py-2 text-sm font-bold border rounded-full transition-all ${
-              currentPage <= 1
-                ? "bg-zinc-100 text-zinc-300 border-zinc-100 cursor-not-allowed"
-                : "bg-white text-zinc-600 hover:bg-zinc-50 hover:shadow-md border-zinc-200"
-            }`}
-          >
-            &larr; Prev
-          </button>
-
-          {/* Indicator Trang Hiện Tại */}
-          <span className="px-4 py-2 text-sm font-bold text-white shadow-md bg-primary rounded-xl">
-            Page {currentPage} / {totalPages}
-          </span>
-
-          {/* Nút Next */}
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            className={`px-4 py-2 text-sm font-bold border rounded-full transition-all ${
-              currentPage >= totalPages
-                ? "bg-zinc-100 text-zinc-300 border-zinc-100 cursor-not-allowed"
-                : "bg-white text-zinc-600 hover:bg-zinc-50 hover:shadow-md border-zinc-200"
-            }`}
-          >
-            Next &rarr;
-          </button>
-        </div>
+        <Box display="flex" justifyContent="center" mt={6} mb={8}>
+          <Pagination
+            count={totalPages}
+            page={currentPage}
+            onChange={(event, value) => onPageChange(value)}
+            color="primary"
+            size="large"
+            shape="rounded"
+            showFirstButton
+            showLastButton
+          />
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }
