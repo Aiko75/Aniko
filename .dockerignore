@@ -2,6 +2,7 @@ Dockerfile
 .dockerignore
 node_modules
 npm-debug.log
+.puppeteer_cache
 README.md
 .next
 .git
